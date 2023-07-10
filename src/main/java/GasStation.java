@@ -10,6 +10,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.DefaultXYDataset;
 
 
@@ -243,14 +244,6 @@ public class GasStation {
 
     void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
         DefaultXYDataset dataset = new DefaultXYDataset();
-        double[][] data = new double[2][arrivalRates.size()];
-
-        for (int i = 0; i < arrivalRates.size(); i++) {
-            data[0][i] = arrivalRates.get(i);
-            data[1][i] = meanSystemTimes.get(i);
-        }
-
-        dataset.addSeries("Mean System Time", data);
 
         JFreeChart chart = ChartFactory.createXYLineChart(
                 "Mean System Time vs. Arrival Rate", // Chart title
@@ -258,23 +251,42 @@ public class GasStation {
                 "Mean System Time", // Y-axis label
                 dataset, // Dataset
                 PlotOrientation.VERTICAL,
-                true, // Show legend
+                false, // Show legend (вимкнено)
                 true, // Use tooltips
                 false // Generate URLs
         );
 
-        // Customize the chart
         XYPlot plot = chart.getXYPlot();
         NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
         xAxis.setTickUnit(new NumberTickUnit(0.2));
 
+        // Вимкнути точки на лініях
+        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+        renderer.setBaseShapesVisible(false);
+
         ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+        chartPanel.setDomainZoomable(true);
+        chartPanel.setRangeZoomable(true);
+        chartPanel.setMouseWheelEnabled(true);
 
         JFrame frame = new JFrame("Gas Station Simulation");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(chartPanel);
         frame.pack();
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
+
+        // Додавання ліній в графік
+        for (int i = 1; i < arrivalRates.size(); i++) {
+            double[][] lineData = new double[2][i + 1];
+            for (int j = 0; j <= i; j++) {
+                lineData[0][j] = arrivalRates.get(j);
+                lineData[1][j] = meanSystemTimes.get(j);
+            }
+            dataset.addSeries("Line " + i, lineData);
+            chartPanel.repaint();
+        }
     }
     public List<Double> getArrivalRateList() {
         return arrivalRateList;
