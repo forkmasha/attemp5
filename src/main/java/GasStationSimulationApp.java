@@ -1,13 +1,27 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class GasStationSimulationApp {
     public static void main(String[] args) {
         int numServers = 5;
         int queueLength = 10;
         int numStates = numServers + queueLength + 1;
         int maxCars = 500;
-        double meanArrivalInterval = 0.1;
         double meanServiceTime = 1.5;
 
-        GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime);
-        gasStationSimulation.runSimulation();
+        List<Double> arrivalRates = new ArrayList<>();
+        List<Double> meanSystemTimes = new ArrayList<>();
+
+        for (double meanArrivalInterval = 0.0; meanArrivalInterval <= 9.9; meanArrivalInterval += 0.2) {
+            GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime);
+            GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime);
+            gasStation.simulate();
+            arrivalRates.add(gasStation.getMeanArrivalInterval());
+            meanSystemTimes.add(gasStation.getMeanSystemTime());
+        }
+
+        GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime);
+        gasStation.drawGraph(arrivalRates, meanSystemTimes);
     }
+
 }

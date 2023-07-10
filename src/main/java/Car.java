@@ -1,4 +1,3 @@
-// Клас Car
 public class Car {
     protected double tinSys;
     protected double tinQueue;

@@ -1,4 +1,3 @@
-// Клас GasStation
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -7,9 +6,14 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.DefaultXYDataset;
+
+
+import javax.swing.*;
 
 public class GasStation {
     private int numServers;
@@ -133,16 +137,18 @@ public class GasStation {
         return Math.sqrt(variance);
     }
 
-    private void processArrivalEvent(double eventTime) {
-        // Збільшуємо лічильник прибулих автомобілів
-        int i = j + k + 1;
-        // Якщо ще не всі автомобілі прибули на станцію, додаємо подію прибуття наступного автомобіля до стеку подій
-        if (i <= maxCars) {
-            double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
-            eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
-        }
-        // Збільшуємо лічильник обслужених автомобілів
-        j++;
+        private void processArrivalEvent(double eventTime) {
+            // Збільшуємо лічильник прибулих автомобілів
+            int i = j + k + 1;
+            // Якщо ще не всі автомобілі прибули на станцію, додаємо подію прибуття наступного автомобіля до стеку подій
+            if (i <= maxCars) {
+                double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
+                eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
+            } else {
+                return; // Повертаємося, якщо кількість автомобілів досягає максимального значення
+            }
+            // Збільшуємо лічильник обслужених автомобілів
+            j++;
 
         // Якщо є вільні сервери, додаємо подію відправлення для цього автомобіля до стеку подій та записуємо час обслуговування
         if (numServers - (j - k) >= 0) {
@@ -235,16 +241,17 @@ public class GasStation {
         return new double[]{lowerBound, upperBound};
     }
 
-    private void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
-        // Create a dataset using the arrival rates and mean system times
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        XYSeries series = new XYSeries("Mean System Time");
-        for (int i = 0; i < arrivalRates.size(); i++) {
-            series.add(arrivalRates.get(i), meanSystemTimes.get(i));
-        }
-        dataset.addSeries(series);
+    void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
+        DefaultXYDataset dataset = new DefaultXYDataset();
+        double[][] data = new double[2][arrivalRates.size()];
 
-        // Create the chart
+        for (int i = 0; i < arrivalRates.size(); i++) {
+            data[0][i] = arrivalRates.get(i);
+            data[1][i] = meanSystemTimes.get(i);
+        }
+
+        dataset.addSeries("Mean System Time", data);
+
         JFreeChart chart = ChartFactory.createXYLineChart(
                 "Mean System Time vs. Arrival Rate", // Chart title
                 "Arrival Rate", // X-axis label
@@ -256,9 +263,41 @@ public class GasStation {
                 false // Generate URLs
         );
 
-        // Display the chart in a frame or panel
-        ChartFrame frame = new ChartFrame("Gas Station Simulation", chart);
+        // Customize the chart
+        XYPlot plot = chart.getXYPlot();
+        NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
+        xAxis.setTickUnit(new NumberTickUnit(0.2));
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+
+        JFrame frame = new JFrame("Gas Station Simulation");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(chartPanel);
         frame.pack();
         frame.setVisible(true);
     }
+    public List<Double> getArrivalRateList() {
+        return arrivalRateList;
+    }
+
+    public List<Double> getMeanSystemTimeList() {
+        return meanSystemTimeList;
+    }
+
+    public void setMeanArrivalInterval(double meanArrivalInterval) {
+        this.meanArrivalInterval = meanArrivalInterval;
+    }
+
+    public double getMeanArrivalInterval() {
+        return meanArrivalInterval;
+    }
+    public double getMeanSystemTime() {
+        double sum = 0.0;
+        for (Double time : systemTimes) {
+            sum += time;
+        }
+        return sum / systemTimes.size();
+    }
+
+
 }
