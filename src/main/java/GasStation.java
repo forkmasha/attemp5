@@ -75,7 +75,33 @@ public class GasStation {
 
     public void simulate() {
         // Ініціалізуємо початкові події
-        eventStack.addEvent(new ArrivalEvent(0.0));
+        System.out.println("\n#########################");
+        System.out.println("Simulation Parameters");
+        System.out.println("#########################");
+        System.out.println("MeanInterArrivalTime " + meanArrivalInterval);
+        System.out.println("MeanServiceTime " + meanServiceTime);
+        System.out.println("Number of servers " + numServers);
+        System.out.println("Queue length " + queueLength);
+        k = 0;
+        j = 0;
+        i=0;
+        time = 0.0;
+        previousTime = 0.0;
+
+        servicedCars.clear();
+        queueStartTimes.clear();
+
+        systemTimeList.clear();
+        queueTimeList.clear();
+
+        systemTimes.clear();
+        queueTimes.clear();
+
+        arrivalRateList.clear();
+        meanSystemTimeList.clear();
+
+        eventStack.events.clear();
+        eventStack.addEvent(new ArrivalEvent(0.0));   // insert initial arrival
 
         // Головний цикл моделювання
         while (!eventStack.isEmpty()) {
@@ -140,11 +166,10 @@ public class GasStation {
         return Math.sqrt(variance);
     }
 
-        private void processArrivalEvent(double eventTime) {
+     private void processArrivalEvent(double eventTime) {
             // Збільшуємо лічильник прибулих автомобілів
             // Якщо ще не всі автомобілі прибули на станцію, додаємо подію прибуття наступного автомобіля до стеку подій
-            if (i <= maxCars) {
-                i++;
+            if (i < maxCars) {
                 double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
                 eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
             } else {
@@ -153,20 +178,24 @@ public class GasStation {
             // Збільшуємо лічильник обслужених автомобілі
 
         // Якщо є вільні сервери, додаємо подію відправлення для цього автомобіля до стеку подій та записуємо час обслуговування
-        if (numServers - totalCarsInSystem >= 0) {
+        i++;
+        if (numServers > servicedCars.size()) {   // directly enter servive
             double serviceTime = exponentialDistribution(meanServiceTime);
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             servicedCars.add(new Car(eventTime, 0.0, serviceTime));
-        } else if (totalCarsInSystem < numStates) {
+        } else if (queueStartTimes.size() < queueLength) {   // enter waiting queue
             queueStartTimes.add(eventTime);
             // Зберігаємо час початку очікування в черзі для автомобіля
 
-        } else {
+        } else {  // arrival is blocked (deflected)
             k++;
         }
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
         meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
     }
+
+
+
     private void processDepartureEvent(double eventTime) {
         // Збільшуємо лічильник обслуженихавтомобілів
         if (!servicedCars.isEmpty()) {
@@ -176,25 +205,32 @@ public class GasStation {
             System.out.println("Error: Departure from empty System!");
         }
         // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
-        if (i - j - k >= numServers) {
+        if (!queueStartTimes.isEmpty()) {
             double serviceTime = exponentialDistribution(meanServiceTime);
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
-            if (!queueStartTimes.isEmpty()) {
+           // if (!queueStartTimes.isEmpty()) {
                 // Додаємо час очікування в черзі до списку
                 double queueTime = eventTime - queueStartTimes.get(0);
                 queueTimes.add(queueTime);
                 queueStartTimes.remove(0); // Видаляємо перший час початку очікування з черги
                 servicedCars.add(new Car(eventTime, queueTime, serviceTime));
-            }
+           // }
         }
     }
+
+
+
+
+
+
+
     private void generateStatistics() {
         // Виводимо статистику симуляції
-        System.out.println("Simulation Statistics");
-        System.out.println("=====================");
         System.out.println("Number of Arrivals: " + i);
         System.out.println("Number of Departures: " + j);
         System.out.println("Number of Blocked Cars: " + k);
+        System.out.println("=====================");
+        System.out.println("Simulation Statistics");
 
         // Збираємо дані про часи перебування в системі та черзі
 

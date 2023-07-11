@@ -3,7 +3,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class EventStack {
-    private List<Event> events;
+    List<Event> events;
 
     public EventStack() {
         events = new ArrayList<>();
