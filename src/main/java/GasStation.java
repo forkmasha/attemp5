@@ -37,6 +37,7 @@ public class GasStation {
     private List<Car> servicedCars;
     private int k;
     private int j;
+    private int i;
     private double time;
     private double previousTime;
 
@@ -67,6 +68,7 @@ public class GasStation {
         servicedCars = new ArrayList<>();
         k = 0;
         j = 0;
+        i=0;
         time = 0.0;
         previousTime = 0.0;
     }
@@ -140,45 +142,49 @@ public class GasStation {
 
         private void processArrivalEvent(double eventTime) {
             // Збільшуємо лічильник прибулих автомобілів
-            int i = j + k + 1;
             // Якщо ще не всі автомобілі прибули на станцію, додаємо подію прибуття наступного автомобіля до стеку подій
             if (i <= maxCars) {
+                i++;
                 double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
                 eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
             } else {
                 return; // Повертаємося, якщо кількість автомобілів досягає максимального значення
             }
-            // Збільшуємо лічильник обслужених автомобілів
-            j++;
+            // Збільшуємо лічильник обслужених автомобілі
 
         // Якщо є вільні сервери, додаємо подію відправлення для цього автомобіля до стеку подій та записуємо час обслуговування
-        if (numServers - (j - k) >= 0) {
+        if (numServers - totalCarsInSystem >= 0) {
             double serviceTime = exponentialDistribution(meanServiceTime);
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             servicedCars.add(new Car(eventTime, 0.0, serviceTime));
-        } else {
-            if (j - k > numStates) {
-                k++;
-            }
-            // Зберігаємо час початку очікування в черзі для автомобіля
+        } else if (totalCarsInSystem < numStates) {
             queueStartTimes.add(eventTime);
+            // Зберігаємо час початку очікування в черзі для автомобіля
+
+        } else {
+            k++;
         }
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
-        meanSystemTimeList.add(calculateMean(systemTimeList));
+        meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
     }
     private void processDepartureEvent(double eventTime) {
         // Збільшуємо лічильник обслуженихавтомобілів
-        j--;
+        if (!servicedCars.isEmpty()) {
+            servicedCars.remove(0); // Видаляємо перший автомобіль з черги
+            j++;
+        } else {
+            System.out.println("Error: Departure from empty System!");
+        }
         // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
-        if (j - k > numServers) {
+        if (i - j - k >= numServers) {
             double serviceTime = exponentialDistribution(meanServiceTime);
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
-            if (!servicedCars.isEmpty()) {
-                servicedCars.remove(0); // Видаляємо перший автомобіль з черги
+            if (!queueStartTimes.isEmpty()) {
                 // Додаємо час очікування в черзі до списку
                 double queueTime = eventTime - queueStartTimes.get(0);
                 queueTimes.add(queueTime);
                 queueStartTimes.remove(0); // Видаляємо перший час початку очікування з черги
+                servicedCars.add(new Car(eventTime, queueTime, serviceTime));
             }
         }
     }
@@ -186,7 +192,7 @@ public class GasStation {
         // Виводимо статистику симуляції
         System.out.println("Simulation Statistics");
         System.out.println("=====================");
-        System.out.println("Number of Arrivals: " + (j + k));
+        System.out.println("Number of Arrivals: " + i);
         System.out.println("Number of Departures: " + j);
         System.out.println("Number of Blocked Cars: " + k);
 
@@ -216,7 +222,7 @@ public class GasStation {
         System.out.println("Mean Queue Time: " + qtimeConfidenceInterval[0]);
         System.out.println("Confidence Interval (Qtime): " + qtimeConfidenceInterval[0] + " - " + qtimeConfidenceInterval[1]);
 
-        drawGraph(arrivalRateList, meanSystemTimeList);
+       // drawGraph(arrivalRateList, meanSystemTimeList);
     }
     private double calculateMean(List<Double> values) {
         double sum = 0.0;
@@ -242,7 +248,54 @@ public class GasStation {
         return new double[]{lowerBound, upperBound};
     }
 
-    void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
+    /* void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
+        DefaultXYDataset dataset = new DefaultXYDataset();
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Mean System Time vs. Arrival Rate", // Chart title
+                "Arrival Rate", // X-axis label
+                "Mean System Time", // Y-axis label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL,
+                false, // Show legend (вимкнено)
+                true, // Use tooltips
+                false // Generate URLs
+        );
+
+        XYPlot plot = chart.getXYPlot();
+        NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
+        xAxis.setTickUnit(new NumberTickUnit(0.2));
+
+        // Вимкнути точки на лініях
+        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+        renderer.setBaseShapesVisible(false);
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+        chartPanel.setDomainZoomable(true);
+        chartPanel.setRangeZoomable(true);
+        chartPanel.setMouseWheelEnabled(true);
+
+        JFrame frame = new JFrame("Gas Station Simulation");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(chartPanel);
+        frame.pack();
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        frame.setVisible(true);
+
+        // Додавання серій ліній для кожної машини
+        for (int i = 0; i < arrivalRates.size(); i++) {
+            double[][] lineData = new double[2][2];
+            lineData[0][0] = 0.0;
+            lineData[0][1] = arrivalRates.get(i);
+            lineData[1][0] = 0.0;
+            lineData[1][1] = meanSystemTimes.get(i);
+            dataset.addSeries("Car " + (i + 1), lineData);
+            chartPanel.repaint();
+        }
+    }
+    */
+   /*  void drawGraph(List<Double> arrivalRates, List<Double> meanSystemTimes) {
         DefaultXYDataset dataset = new DefaultXYDataset();
 
         JFreeChart chart = ChartFactory.createXYLineChart(
@@ -288,6 +341,7 @@ public class GasStation {
             chartPanel.repaint();
         }
     }
+*/
     public List<Double> getArrivalRateList() {
         return arrivalRateList;
     }
@@ -305,10 +359,14 @@ public class GasStation {
     }
     public double getMeanSystemTime() {
         double sum = 0.0;
+        int i = 0;
         for (Double time : systemTimes) {
             sum += time;
+            i++;
         }
-        return sum / systemTimes.size();
+        // sum /= systemTimes.size();
+        sum /= i;
+        return sum;
     }
 
 

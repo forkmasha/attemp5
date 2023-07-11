@@ -7,12 +7,12 @@ public class GasStationSimulationApp {
         int queueLength = 10;
         int numStates = numServers + queueLength + 1;
         int maxCars = 500;
-        double meanServiceTime = 1.5;
+        double meanServiceTime = 0.5;
 
         List<Double> arrivalRates = new ArrayList<>();
         List<Double> meanSystemTimes = new ArrayList<>();
 
-        for (double meanArrivalInterval = 0.0; meanArrivalInterval <= 9.9; meanArrivalInterval += 0.2) {
+        for (double meanArrivalInterval = 2.001; meanArrivalInterval >= 0.001; meanArrivalInterval -= 0.2) {
             GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime);
             GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime);
             gasStation.simulate();
@@ -21,7 +21,7 @@ public class GasStationSimulationApp {
         }
 
         GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime);
-        gasStation.drawGraph(arrivalRates, meanSystemTimes);
+       // gasStation.drawGraph(arrivalRates, meanSystemTimes);
     }
 
 }
