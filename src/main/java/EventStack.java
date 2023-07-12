@@ -18,6 +18,7 @@ public class EventStack {
         if (events.isEmpty()) {
             return null;
         }
+        Collections.sort(events, (e1, e2) -> Double.compare(e1.getTime(), e2.getTime()));
         return events.remove(0);
     }
 
