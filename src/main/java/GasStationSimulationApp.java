@@ -1,8 +1,12 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GasStationSimulationApp {
     public static void main(String[] args) {
+
+
         int numServers = 5;
         int queueLength = 10;
         int numStates = numServers + queueLength + 1;
@@ -11,16 +15,16 @@ public class GasStationSimulationApp {
 
         List<Double> arrivalRates = new ArrayList<>();
         List<Double> meanSystemTimes = new ArrayList<>();
-        List<Double> meanQueueTimes=new ArrayList<>();
-        List<Double> meanServiceTimes=new ArrayList<>();
+        List<Double> meanQueueTimes = new ArrayList<>();
+        List<Double> meanServiceTimes = new ArrayList<>();
 
         List<double[]> systemTimesConfidences = new ArrayList<>();
         List<double[]> queueTimesConfidences = new ArrayList<>();
         List<double[]> serviceTimesConfidences = new ArrayList<>();
 
         for (double arrivalRate = 0.5; arrivalRate <= 25; arrivalRate += 0.5) {
-            GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0/arrivalRate, meanServiceTime);
-            GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 1.0/arrivalRate, meanServiceTime);
+            GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime);
+            GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime);
             gasStation.simulate();
             arrivalRates.add(arrivalRate);
 
