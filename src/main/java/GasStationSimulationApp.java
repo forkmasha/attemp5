@@ -6,7 +6,6 @@ import java.util.List;
 public class GasStationSimulationApp {
     public static void main(String[] args) {
 
-
         int numServers = 5;
         int queueLength = 10;
         int numStates = numServers + queueLength + 1;

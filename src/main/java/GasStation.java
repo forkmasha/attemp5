@@ -1,6 +1,8 @@
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -9,12 +11,17 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.DefaultXYDataset;
 
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
+import static java.awt.Color.*;
 
 public class GasStation {
     private int numServers;
@@ -308,135 +315,137 @@ public class GasStation {
 
     private double[] calculateConfidenceInterval(List<Double> values) {
 
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("CriticalValueTable");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            Object[][] data = {
-                    {1, 3.078, 6.314, 12.706, 31.821, 63.65},
-                    {2, 1.886, 2.920, 4.303, 6.965, 9.925},
-                    {3, 1.638, 2.353, 3.182, 4.541, 5.841},
-                    {4, 1.533, 2.132, 2.776, 3.747, 4.604},
-                    {5, 1.476, 2.015, 2.571, 3.365, 4.032},
-                    {6, 1.440, 1.943, 2.447, 3.143, 3.707},
-                    {7, 1.415, 1.895, 2.365, 2.998, 3.499},
-                    {8, 1.397, 1.860, 2.306, 2.896, 3.355},
-                    {9, 1.383, 1.833, 2.262, 2.821, 3.250},
-                    {10, 1.372, 1.812, 2.228, 2.764, 3.169},
-                    {11, 1.363, 1.796, 2.201, 2.718, 3.106},
-                    {12, 1.356, 1.782, 2.179, 2.681, 3.055},
-                    {13, 1.350, 1.771, 2.160, 2.650, 3.012},
-                    {14, 1.345, 1.761, 2.145, 2.624, 2.977},
-                    {15, 1.341, 1.753, 2.131, 2.602, 2.947},
-                    {16, 1.337, 1.746, 2.120, 2.583, 2.921},
-                    {17, 1.333, 1.740, 2.110, 2.567, 2.898},
-                    {18, 1.330, 1.734, 2.101, 2.552, 2.878},
-                    {19, 1.328, 1.729, 2.093, 2.539, 2.861},
-                    {20, 1.325, 1.725, 2.086, 2.528, 2.845},
-                    {21, 1.323, 1.721, 2.080, 2.518, 2.831},
-                    {22, 1.321, 1.717, 2.074, 2.508, 2.819},
-                    {23, 1.319, 1.714, 2.069, 2.500, 2.807},
-                    {24, 1.318, 1.711, 2.064, 2.492, 2.797},
-                    {25, 1.316, 1.708, 2.060, 2.485, 2.787},
-                    {26, 1.315, 1.706, 2.056, 2.479, 2.779},
-                    {27, 1.314, 1.703, 2.052, 2.473, 2.771},
-                    {28, 1.313, 1.701, 2.048, 2.467, 2.763},
-                    {29, 1.311, 1.699, 2.045, 2.462, 2.756},
-                    {30, 1.310, 1.697, 2.042, 2.457, 2.750},
-                    {31, 1.309, 1.696, 2.040, 2.453, 2.744},
-                    {32, 1.309, 1.694, 2.037, 2.449, 2.738},
-                    {33, 1.308, 1.692, 2.035, 2.445, 2.733},
-                    {34, 1.307, 1.691, 2.032, 2.441, 2.728},
-                    {35, 1.306, 1.690, 2.030, 2.438, 2.724},
-                    {36, 1.306, 1.688, 2.028, 2.434, 2.719},
-                    {37, 1.305, 1.687, 2.026, 2.431, 2.715},
-                    {38, 1.304, 1.686, 2.024, 2.429, 2.712},
-                    {39, 1.304, 1.685, 2.023, 2.426, 2.708},
-                    {40, 1.303, 1.684, 2.021, 2.423, 2.704},
+        //SwingUtilities.invokeLater(() -> {
+        //  JFrame frame = new JFrame("CriticalValueTable");
+        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        double[][] data = {
+                {1, 3.078, 6.314, 12.706, 31.821, 63.65},
+                {2, 1.886, 2.920, 4.303, 6.965, 9.925},
+                {3, 1.638, 2.353, 3.182, 4.541, 5.841},
+                {4, 1.533, 2.132, 2.776, 3.747, 4.604},
+                {5, 1.476, 2.015, 2.571, 3.365, 4.032},
+                {6, 1.440, 1.943, 2.447, 3.143, 3.707},
+                {7, 1.415, 1.895, 2.365, 2.998, 3.499},
+                {8, 1.397, 1.860, 2.306, 2.896, 3.355},
+                {9, 1.383, 1.833, 2.262, 2.821, 3.250},
+                {10, 1.372, 1.812, 2.228, 2.764, 3.169},
+                {11, 1.363, 1.796, 2.201, 2.718, 3.106},
+                {12, 1.356, 1.782, 2.179, 2.681, 3.055},
+                {13, 1.350, 1.771, 2.160, 2.650, 3.012},
+                {14, 1.345, 1.761, 2.145, 2.624, 2.977},
+                {15, 1.341, 1.753, 2.131, 2.602, 2.947},
+                {16, 1.337, 1.746, 2.120, 2.583, 2.921},
+                {17, 1.333, 1.740, 2.110, 2.567, 2.898},
+                {18, 1.330, 1.734, 2.101, 2.552, 2.878},
+                {19, 1.328, 1.729, 2.093, 2.539, 2.861},
+                {20, 1.325, 1.725, 2.086, 2.528, 2.845},
+                {21, 1.323, 1.721, 2.080, 2.518, 2.831},
+                {22, 1.321, 1.717, 2.074, 2.508, 2.819},
+                {23, 1.319, 1.714, 2.069, 2.500, 2.807},
+                {24, 1.318, 1.711, 2.064, 2.492, 2.797},
+                {25, 1.316, 1.708, 2.060, 2.485, 2.787},
+                {26, 1.315, 1.706, 2.056, 2.479, 2.779},
+                {27, 1.314, 1.703, 2.052, 2.473, 2.771},
+                {28, 1.313, 1.701, 2.048, 2.467, 2.763},
+                {29, 1.311, 1.699, 2.045, 2.462, 2.756},
+                {30, 1.310, 1.697, 2.042, 2.457, 2.750},
+                {31, 1.309, 1.696, 2.040, 2.453, 2.744},
+                {32, 1.309, 1.694, 2.037, 2.449, 2.738},
+                {33, 1.308, 1.692, 2.035, 2.445, 2.733},
+                {34, 1.307, 1.691, 2.032, 2.441, 2.728},
+                {35, 1.306, 1.690, 2.030, 2.438, 2.724},
+                {36, 1.306, 1.688, 2.028, 2.434, 2.719},
+                {37, 1.305, 1.687, 2.026, 2.431, 2.715},
+                {38, 1.304, 1.686, 2.024, 2.429, 2.712},
+                {39, 1.304, 1.685, 2.023, 2.426, 2.708},
+                {40, 1.303, 1.684, 2.021, 2.423, 2.704},
 
-                    {41, 1.303, 1.683, 2.020, 2.421, 2.701},
-                    {42, 1.302, 1.682, 2.018, 2.418, 2.698},
-                    {43, 1.302, 1.681, 2.017, 2.416, 2.695},
-                    {44, 1.301, 1.680, 2.015, 2.414, 2.692},
-                    {45, 1.301, 1.679, 2.014, 2.412, 2.690},
-                    {46, 1.300, 1.679, 2.013, 2.410, 2.687},
-                    {47, 1.300, 1.678, 2.012, 2.408, 2.685},
-                    {48, 1.299, 1.677, 2.011, 2.407, 2.682},
-                    {49, 1.299, 1.677, 2.010, 2.405, 2.680},
-                    {50, 1.299, 1.676, 2.009, 2.403, 2.678},
-                    {51, 1.298, 1.675, 2.008, 2.402, 2.676},
-                    {52, 1.298, 1.675, 2.007, 2.400, 2.674},
-                    {53, 1.298, 1.674, 2.006, 2.399, 2.672},
-                    {54, 1.297, 1.674, 2.005, 2.397, 2.670},
-                    {55, 1.297, 1.673, 2.004, 2.396, 2.668},
-                    {56, 1.297, 1.673, 2.003, 2.395, 2.667},
-                    {57, 1.297, 1.672, 2.002, 2.394, 2.665},
-                    {58, 1.296, 1.672, 2.002, 2.392, 2.663},
-                    {59, 1.296, 1.671, 2.001, 2.391, 2.662},
-                    {60, 1.296, 1.671, 2.000, 2.390, 2.660},
-                    {61, 1.296, 1.670, 2.000, 2.389, 2.659},
-                    {62, 1.295, 1.670, 1.999, 2.388, 2.657},
-                    {63, 1.295, 1.669, 1.998, 2.387, 2.656},
-                    {64, 1.295, 1.669, 1.998, 2.386, 2.655},
-                    {65, 1.295, 1.669, 1.997, 2.385, 2.654},
-                    {66, 1.295, 1.668, 1.997, 2.384, 2.652},
-                    {67, 1.294, 1.668, 1.996, 2.383, 2.651},
-                    {68, 1.294, 1.668, 1.995, 2.382, 2.650},
-                    {69, 1.294, 1.667, 1.995, 2.382, 2.649},
-                    {70, 1.294, 1.667, 1.994, 2.381, 2.648},
-                    {71, 1.294, 1.667, 1.994, 2.380, 2.647},
-                    {72, 1.293, 1.666, 1.993, 2.379, 2.646},
-                    {73, 1.293, 1.666, 1.993, 2.379, 2.645},
-                    {74, 1.293, 1.666, 1.993, 2.378, 2.644},
-                    {75, 1.293, 1.665, 1.992, 2.377, 2.643},
-                    {76, 1.293, 1.665, 1.992, 2.376, 2.642},
-                    {77, 1.293, 1.665, 1.991, 2.376, 2.641},
-                    {78, 1.292, 1.665, 1.991, 2.375, 2.640},
-                    {79, 1.292, 1.664, 1.990, 2.374, 2.640},
-                    {80, 1.292, 1.664, 1.990, 2.374, 2.639},
-                    {81, 1.292, 1.664, 1.990, 2.373, 2.638},
-                    {82, 1.292, 1.664, 1.989, 2.373, 2.637},
-                    {83, 1.292, 1.663, 1.989, 2.372, 2.636},
-                    {84, 1.292, 1.663, 1.989, 2.372, 2.636},
-                    {85, 1.292, 1.663, 1.988, 2.371, 2.635},
-                    {86, 1.291, 1.663, 1.988, 2.370, 2.634},
-                    {87, 1.291, 1.663, 1.988, 2.370, 2.634},
-                    {88, 1.291, 1.662, 1.987, 2.369, 2.633},
-                    {89, 1.291, 1.662, 1.987, 2.369, 2.632},
-                    {90, 1.291, 1.662, 1.987, 2.368, 2.632},
-                    {91, 1.291, 1.662, 1.986, 2.368, 2.631},
-                    {92, 1.291, 1.662, 1.986, 2.368, 2.630},
-                    {93, 1.291, 1.661, 1.986, 2.367, 2.630},
-                    {94, 1.291, 1.661, 1.986, 2.367, 2.629},
-                    {95, 1.291, 1.661, 1.985, 2.366, 2.629},
-                    {96, 1.290, 1.661, 1.985, 2.366, 2.628},
-                    {97, 1.290, 1.661, 1.985, 2.365, 2.627},
-                    {98, 1.290, 1.661, 1.984, 2.365, 2.627},
-                    {99, 1.290, 1.660, 1.984, 2.365, 2.626},
-                    {100, 1.290, 1.660, 1.984, 2.364, 2.626},
-                    {101, 1.290, 1.660, 1.984, 2.364, 2.625},
-                    {102, 1.290, 1.660, 1.983, 2.363, 2.625},
-                    {103, 1.290, 1.660, 1.983, 2.363, 2.624},
-                    {104, 1.290, 1.660, 1.983, 2.363, 2.624},
-                    {105, 1.290, 1.659, 1.983, 2.362, 2.623},
-            };
-            String[] columnNames = {"Degrees of Freedom", "80%", "90%", "95%", "98%", "99%"};
-            DefaultTableModel model = new DefaultTableModel(data, columnNames);
-            JTable criticalValueTable = new JTable(model);
-            JScrollPane scrollPane = new JScrollPane(criticalValueTable);
-            frame.add(scrollPane);
-            frame.setSize(500, 300);
-            frame.setVisible(true);
+                {41, 1.303, 1.683, 2.020, 2.421, 2.701},
+                {42, 1.302, 1.682, 2.018, 2.418, 2.698},
+                {43, 1.302, 1.681, 2.017, 2.416, 2.695},
+                {44, 1.301, 1.680, 2.015, 2.414, 2.692},
+                {45, 1.301, 1.679, 2.014, 2.412, 2.690},
+                {46, 1.300, 1.679, 2.013, 2.410, 2.687},
+                {47, 1.300, 1.678, 2.012, 2.408, 2.685},
+                {48, 1.299, 1.677, 2.011, 2.407, 2.682},
+                {49, 1.299, 1.677, 2.010, 2.405, 2.680},
+                {50, 1.299, 1.676, 2.009, 2.403, 2.678},
+                {51, 1.298, 1.675, 2.008, 2.402, 2.676},
+                {52, 1.298, 1.675, 2.007, 2.400, 2.674},
+                {53, 1.298, 1.674, 2.006, 2.399, 2.672},
+                {54, 1.297, 1.674, 2.005, 2.397, 2.670},
+                {55, 1.297, 1.673, 2.004, 2.396, 2.668},
+                {56, 1.297, 1.673, 2.003, 2.395, 2.667},
+                {57, 1.297, 1.672, 2.002, 2.394, 2.665},
+                {58, 1.296, 1.672, 2.002, 2.392, 2.663},
+                {59, 1.296, 1.671, 2.001, 2.391, 2.662},
+                {60, 1.296, 1.671, 2.000, 2.390, 2.660},
+                {61, 1.296, 1.670, 2.000, 2.389, 2.659},
+                {62, 1.295, 1.670, 1.999, 2.388, 2.657},
+                {63, 1.295, 1.669, 1.998, 2.387, 2.656},
+                {64, 1.295, 1.669, 1.998, 2.386, 2.655},
+                {65, 1.295, 1.669, 1.997, 2.385, 2.654},
+                {66, 1.295, 1.668, 1.997, 2.384, 2.652},
+                {67, 1.294, 1.668, 1.996, 2.383, 2.651},
+                {68, 1.294, 1.668, 1.995, 2.382, 2.650},
+                {69, 1.294, 1.667, 1.995, 2.382, 2.649},
+                {70, 1.294, 1.667, 1.994, 2.381, 2.648},
+                {71, 1.294, 1.667, 1.994, 2.380, 2.647},
+                {72, 1.293, 1.666, 1.993, 2.379, 2.646},
+                {73, 1.293, 1.666, 1.993, 2.379, 2.645},
+                {74, 1.293, 1.666, 1.993, 2.378, 2.644},
+                {75, 1.293, 1.665, 1.992, 2.377, 2.643},
+                {76, 1.293, 1.665, 1.992, 2.376, 2.642},
+                {77, 1.293, 1.665, 1.991, 2.376, 2.641},
+                {78, 1.292, 1.665, 1.991, 2.375, 2.640},
+                {79, 1.292, 1.664, 1.990, 2.374, 2.640},
+                {80, 1.292, 1.664, 1.990, 2.374, 2.639},
+                {81, 1.292, 1.664, 1.990, 2.373, 2.638},
+                {82, 1.292, 1.664, 1.989, 2.373, 2.637},
+                {83, 1.292, 1.663, 1.989, 2.372, 2.636},
+                {84, 1.292, 1.663, 1.989, 2.372, 2.636},
+                {85, 1.292, 1.663, 1.988, 2.371, 2.635},
+                {86, 1.291, 1.663, 1.988, 2.370, 2.634},
+                {87, 1.291, 1.663, 1.988, 2.370, 2.634},
+                {88, 1.291, 1.662, 1.987, 2.369, 2.633},
+                {89, 1.291, 1.662, 1.987, 2.369, 2.632},
+                {90, 1.291, 1.662, 1.987, 2.368, 2.632},
+                {91, 1.291, 1.662, 1.986, 2.368, 2.631},
+                {92, 1.291, 1.662, 1.986, 2.368, 2.630},
+                {93, 1.291, 1.661, 1.986, 2.367, 2.630},
+                {94, 1.291, 1.661, 1.986, 2.367, 2.629},
+                {95, 1.291, 1.661, 1.985, 2.366, 2.629},
+                {96, 1.290, 1.661, 1.985, 2.366, 2.628},
+                {97, 1.290, 1.661, 1.985, 2.365, 2.627},
+                {98, 1.290, 1.661, 1.984, 2.365, 2.627},
+                {99, 1.290, 1.660, 1.984, 2.365, 2.626},
+                {100, 1.290, 1.660, 1.984, 2.364, 2.626},
+                {101, 1.290, 1.660, 1.984, 2.364, 2.625},
+                {102, 1.290, 1.660, 1.983, 2.363, 2.625},
+                {103, 1.290, 1.660, 1.983, 2.363, 2.624},
+                {104, 1.290, 1.660, 1.983, 2.363, 2.624},
+                {105, 1.290, 1.659, 1.983, 2.362, 2.623},
+                {999, 1.280, 1.645, 1.960, 2.330, 2.575},
+        };
+        String[] columnNames = {"Degrees of Freedom", "80%", "90%", "95%", "98%", "99%"};
+        // DefaultTableModel model = new DefaultTableModel(data, columnNames);
+        //   JTable criticalValueTable = new JTable(model);
+        //JScrollPane scrollPane = new JScrollPane(criticalValueTable);
+        //  frame.add(scrollPane);
+        //frame.setSize(500, 300);
+        //frame.setVisible(true);
 
-            int rowIndex = 2;
-            int columnIndex = 0;
-            Object value = criticalValueTable.getValueAt(rowIndex, columnIndex);
-            System.out.println(value);
-        });
         double mean = calculateMean(values);
         double stdDev = calculateStandardDeviation(values);
+        double zScore = 100;
 
         // Calculate the confidence interval
-        double zScore = criticalValueTable.getValueAt(values.size(), 3); // For a 95% confidence interval (assuming a large enough sample size)
+        if ( values.size() > 105 ) {
+            zScore = data[105][3]; // For a 95% confidence interval (assuming a large enough sample size)
+        }
+        else {
+            zScore = data[values.size()][3]; // For a 95% confidence interval (assuming a large enough sample size)
+        }
         double marginOfError = zScore * (stdDev / Math.sqrt(values.size()));
         double lowerBound = mean - marginOfError;
         double upperBound = mean + marginOfError;
@@ -495,16 +504,14 @@ public class GasStation {
         sum /= i;
         return sum;
     }
-
-
     void drawGraph(List<Double> xValues, List<Double> meanValues, List<double[]> confidenceInterval, List<Double> meanValues2, List<double[]> confidenceInterval2,
                    List<Double> meanValues3, List<double[]> confidenceInterval3) {
         DefaultXYDataset dataset = new DefaultXYDataset();
 
         JFreeChart chart = ChartFactory.createXYLineChart(
-                "Mean System Time vs. Arrival Rate", // Chart title
-                "Arrival Rate", // X-axis label
-                "Mean System Time", // Y-axis label
+                "Queueing Model Results for EV Charging Sites", // Chart title
+                "Arrival Rate [1/h]", // X-axis label
+                "Mean Times [h]", // Y-axis label
                 dataset, // Dataset
                 PlotOrientation.VERTICAL,
                 false, // Show legend
@@ -514,7 +521,8 @@ public class GasStation {
 
         XYPlot plot = chart.getXYPlot();
         NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
-        xAxis.setTickUnit(new NumberTickUnit(1));
+        xAxis.setTickUnit(new NumberTickUnit(5));
+        // yAxis.setTickUnit(new NumberTickUnit(0.25));
 
         // Disable points on the lines
         XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
@@ -530,7 +538,7 @@ public class GasStation {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(chartPanel);
         frame.pack();
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
 
         // Adding mean system time line to the graph
@@ -539,7 +547,8 @@ public class GasStation {
             lineData[0][i] = xValues.get(i);
             lineData[1][i] = meanValues.get(i);
         }
-        dataset.addSeries("Mean System Time", lineData);
+        dataset.addSeries(0, lineData); // "Mean System Time"
+        //renderer.setSeriesPaint(0,Color.BLACK);
         //chartPanel.repaint();
         for (int i = 0; i < xValues.size(); i++) {
             double[][] barData = new double[2][2];
@@ -548,17 +557,23 @@ public class GasStation {
             barData[1][0] = confidenceInterval.get(i)[0];
             barData[1][1] = confidenceInterval.get(i)[1];
             dataset.addSeries("sys" + i, barData);
+           // renderer.setSeriesPaint(i+1,Color.BLACK);
         }
-        //chartPanel.repaint();
+        // XYLineAndShapeRenderer renderer1=new XYLineAndShapeRenderer();
+        renderer.setSeriesPaint(0, MAGENTA);
+        // plot.setRenderer(0,renderer1);
+        chartPanel.repaint();
 
         // Adding mean queuing time line to the graph
+
         double[][] lineData2 = new double[2][xValues.size()];
         for (int i = 0; i < xValues.size(); i++) {
             lineData2[0][i] = xValues.get(i);
             lineData2[1][i] = meanValues2.get(i);
         }
-        dataset.addSeries("Mean Queue Time", lineData2);
-        //chartPanel.repaint();
+        dataset.addSeries(1000, lineData2);  // "Mean Queue Time"
+       // renderer.setSeriesPaint(xValues.size()+1,Color.PINK);
+
         for (int i = 0; i < xValues.size(); i++) {
             double[][] barData2 = new double[2][2];
             barData2[0][0] = xValues.get(i);
@@ -566,8 +581,13 @@ public class GasStation {
             barData2[1][0] = confidenceInterval2.get(i)[0];
             barData2[1][1] = confidenceInterval2.get(i)[1];
             dataset.addSeries("que" + i, barData2);
+            //renderer.setSeriesPaint(xValues.size()+i+2,Color.PINK);
         }
-        //chartPanel.repaint();
+        //XYLineAndShapeRenderer renderer2=new XYLineAndShapeRenderer();
+        renderer.setSeriesPaint(1000, RED);
+        // plot.setRenderer(0,renderer);
+       chartPanel.repaint();
+       // chartPanel.repaint();
 
         // Adding mean service time line to the graph
         double[][] lineData3 = new double[2][xValues.size()];
@@ -575,8 +595,9 @@ public class GasStation {
             lineData3[0][i] = xValues.get(i);
             lineData3[1][i] = meanValues3.get(i);
         }
-        dataset.addSeries("Mean Service Time", lineData3);
+        dataset.addSeries(2000, lineData3); // "Mean Service Time"
         //chartPanel.repaint();
+        //renderer.setSeriesPaint(2*xValues.size()+2,Color.BLUE);
         for (int i = 0; i < xValues.size(); i++) {
             double[][] barData3 = new double[2][2];
             barData3[0][0] = xValues.get(i);
@@ -584,12 +605,12 @@ public class GasStation {
             barData3[1][0] = confidenceInterval3.get(i)[0];
             barData3[1][1] = confidenceInterval3.get(i)[1];
             dataset.addSeries("cha" + i, barData3);
+            //renderer.setSeriesPaint(2*xValues.size()+i+3,Color.BLUE);
         }
+        renderer.setSeriesPaint(2000, BLACK);
+        // plot.setRenderer(0,renderer);
         chartPanel.repaint();
-
     }
-
-
 }
 
 
