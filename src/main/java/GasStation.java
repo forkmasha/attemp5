@@ -50,7 +50,7 @@ public class GasStation {
     private double previousTime;
     private double[] systemTimeConfidence;
 
-    private double[] queueTimesConfidence;
+    private double[] queueTimeConfidence;
     private double[] serviceTimeConfidence;
     private List<Double> queueStartTimes;
 
@@ -62,7 +62,7 @@ public class GasStation {
     }
 
     public double[] getQueueTimeConfidence() {
-        return systemTimeConfidence;
+        return queueTimeConfidence;
     }
 
     public double[] getServiceTimeConfidence() {
@@ -281,11 +281,12 @@ public class GasStation {
 
         System.out.println("#########################");
 
-        double[] qtimeConfidenceInterval = calculateConfidenceInterval(queueTimes);
-        double[] ctimeConfidenceInterval = calculateConfidenceInterval(serviceTimes);
-        double[] stimeConfidenceInterval = calculateConfidenceInterval(systemTimes);
+        int confidLevel = 95; // set confidence level in percent (int: 80, 90, 95, 98, 99)
+        double[] qtimeConfidenceInterval = calculateConfidenceInterval(queueTimes, confidLevel);
+        double[] ctimeConfidenceInterval = calculateConfidenceInterval(serviceTimes, confidLevel);
+        double[] stimeConfidenceInterval = calculateConfidenceInterval(systemTimes, confidLevel);
         systemTimeConfidence = stimeConfidenceInterval;
-        queueTimesConfidence = qtimeConfidenceInterval;
+        queueTimeConfidence = qtimeConfidenceInterval;
         serviceTimeConfidence = ctimeConfidenceInterval;
 
         System.out.println("Mean Queue Time: " + qtimeConfidenceInterval[0]);
@@ -313,7 +314,7 @@ public class GasStation {
         return -mean * Math.log(1 - random.nextDouble());
     }
 
-    private double[] calculateConfidenceInterval(List<Double> values) {
+    private double[] calculateConfidenceInterval(List<Double> values, int level) {
 
         //SwingUtilities.invokeLater(() -> {
         //  JFrame frame = new JFrame("CriticalValueTable");
@@ -437,14 +438,36 @@ public class GasStation {
 
         double mean = calculateMean(values);
         double stdDev = calculateStandardDeviation(values);
+        //int level = 95;
+        int levelID = 0;
         double zScore = 100;
+
+        switch(level) {
+            case 80:
+                levelID = 1;
+                break;
+            case 90:
+                levelID = 2;
+                break;
+            case 95:
+                levelID = 3;
+                break;
+            case 98:
+                levelID = 4;
+                break;
+            case 99:
+                levelID = 5;
+                break;
+            default:
+                System.out.println("Error: Confidence level is not available in table");
+        }
 
         // Calculate the confidence interval
         if ( values.size() > 105 ) {
-            zScore = data[105][3]; // For a 95% confidence interval (assuming a large enough sample size)
+            zScore = data[105][levelID]; // For a 95% confidence interval (assuming a large enough sample size)
         }
         else {
-            zScore = data[values.size()][3]; // For a 95% confidence interval (assuming a large enough sample size)
+            zScore = data[values.size()][levelID]; // For a 95% confidence interval (assuming a large enough sample size)
         }
         double marginOfError = zScore * (stdDev / Math.sqrt(values.size()));
         double lowerBound = mean - marginOfError;
@@ -504,7 +527,7 @@ public class GasStation {
         sum /= i;
         return sum;
     }
-    void drawGraph(List<Double> xValues, List<Double> meanValues, List<double[]> confidenceInterval, List<Double> meanValues2, List<double[]> confidenceInterval2,
+    void drawGraph(List<Double> xValues, List<Double> meanValues1, List<double[]> confidenceInterval1, List<Double> meanValues2, List<double[]> confidenceInterval2,
                    List<Double> meanValues3, List<double[]> confidenceInterval3) {
         DefaultXYDataset dataset = new DefaultXYDataset();
 
@@ -522,7 +545,6 @@ public class GasStation {
         XYPlot plot = chart.getXYPlot();
         NumberAxis xAxis = (NumberAxis) plot.getDomainAxis();
         xAxis.setTickUnit(new NumberTickUnit(5));
-        // yAxis.setTickUnit(new NumberTickUnit(0.25));
 
         // Disable points on the lines
         XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
@@ -541,53 +563,43 @@ public class GasStation {
         // frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
 
-        // Adding mean system time line to the graph
-        double[][] lineData = new double[2][xValues.size()];
-        for (int i = 0; i < xValues.size(); i++) {
-            lineData[0][i] = xValues.get(i);
-            lineData[1][i] = meanValues.get(i);
-        }
-        dataset.addSeries(0, lineData); // "Mean System Time"
-        //renderer.setSeriesPaint(0,Color.BLACK);
-        //chartPanel.repaint();
-        for (int i = 0; i < xValues.size(); i++) {
-            double[][] barData = new double[2][2];
-            barData[0][0] = xValues.get(i);
-            barData[0][1] = xValues.get(i);
-            barData[1][0] = confidenceInterval.get(i)[0];
-            barData[1][1] = confidenceInterval.get(i)[1];
-            dataset.addSeries("sys" + i, barData);
-           // renderer.setSeriesPaint(i+1,Color.BLACK);
-        }
-        // XYLineAndShapeRenderer renderer1=new XYLineAndShapeRenderer();
-        renderer.setSeriesPaint(0, MAGENTA);
-        // plot.setRenderer(0,renderer1);
-        chartPanel.repaint();
-
         // Adding mean queuing time line to the graph
-
         double[][] lineData2 = new double[2][xValues.size()];
         for (int i = 0; i < xValues.size(); i++) {
             lineData2[0][i] = xValues.get(i);
             lineData2[1][i] = meanValues2.get(i);
         }
         dataset.addSeries(1000, lineData2);  // "Mean Queue Time"
-       // renderer.setSeriesPaint(xValues.size()+1,Color.PINK);
+        renderer.setSeriesPaint(0, MAGENTA);
 
         for (int i = 0; i < xValues.size(); i++) {
-            double[][] barData2 = new double[2][2];
-            barData2[0][0] = xValues.get(i);
-            barData2[0][1] = xValues.get(i);
-            barData2[1][0] = confidenceInterval2.get(i)[0];
-            barData2[1][1] = confidenceInterval2.get(i)[1];
-            dataset.addSeries("que" + i, barData2);
-            //renderer.setSeriesPaint(xValues.size()+i+2,Color.PINK);
+            double[][] barData = new double[2][2];
+            barData[0][0] = xValues.get(i);
+            barData[0][1] = xValues.get(i);
+            barData[1][0] = confidenceInterval2.get(i)[0];
+            barData[1][1] = confidenceInterval2.get(i)[1];
+            dataset.addSeries(i + 1, barData);
+            renderer.setSeriesPaint(i + 1, MAGENTA);
         }
-        //XYLineAndShapeRenderer renderer2=new XYLineAndShapeRenderer();
-        renderer.setSeriesPaint(1000, RED);
-        // plot.setRenderer(0,renderer);
-       chartPanel.repaint();
-       // chartPanel.repaint();
+
+        // Adding mean system time line to the graph
+        double[][] lineData1 = new double[2][xValues.size()];
+        for (int i = 0; i < xValues.size(); i++) {
+            lineData1[0][i] = xValues.get(i);
+            lineData1[1][i] = meanValues1.get(i);
+        }
+        dataset.addSeries(0, lineData1); // "Mean System Time"
+        renderer.setSeriesPaint(xValues.size() + 1, BLACK);
+
+        for (int i = 0; i < xValues.size(); i++) {
+            double[][] barData = new double[2][2];
+            barData[0][0] = xValues.get(i);
+            barData[0][1] = xValues.get(i);
+            barData[1][0] = confidenceInterval1.get(i)[0];
+            barData[1][1] = confidenceInterval1.get(i)[1];
+            dataset.addSeries(xValues.size() + i + 2, barData);
+            renderer.setSeriesPaint(xValues.size() + i + 2, BLACK);
+        }
 
         // Adding mean service time line to the graph
         double[][] lineData3 = new double[2][xValues.size()];
@@ -596,19 +608,18 @@ public class GasStation {
             lineData3[1][i] = meanValues3.get(i);
         }
         dataset.addSeries(2000, lineData3); // "Mean Service Time"
-        //chartPanel.repaint();
-        //renderer.setSeriesPaint(2*xValues.size()+2,Color.BLUE);
+        renderer.setSeriesPaint(2 * xValues.size() + 2, BLUE);
+
         for (int i = 0; i < xValues.size(); i++) {
-            double[][] barData3 = new double[2][2];
-            barData3[0][0] = xValues.get(i);
-            barData3[0][1] = xValues.get(i);
-            barData3[1][0] = confidenceInterval3.get(i)[0];
-            barData3[1][1] = confidenceInterval3.get(i)[1];
-            dataset.addSeries("cha" + i, barData3);
-            //renderer.setSeriesPaint(2*xValues.size()+i+3,Color.BLUE);
+            double[][] barData = new double[2][2];
+            barData[0][0] = xValues.get(i);
+            barData[0][1] = xValues.get(i);
+            barData[1][0] = confidenceInterval3.get(i)[0];
+            barData[1][1] = confidenceInterval3.get(i)[1];
+            dataset.addSeries(2 * xValues.size() + i + 3, barData);
+            renderer.setSeriesPaint(2 * xValues.size() + i + 3, BLUE);
         }
-        renderer.setSeriesPaint(2000, BLACK);
-        // plot.setRenderer(0,renderer);
+
         chartPanel.repaint();
     }
 }
