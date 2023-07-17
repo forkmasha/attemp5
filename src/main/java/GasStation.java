@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -22,6 +23,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 import static java.awt.Color.*;
+import static java.lang.Math.ceil;
+import static java.lang.Math.log;
 
 public class GasStation {
     private int numServers;
@@ -48,6 +51,7 @@ public class GasStation {
     private int i;
     private double time;
     private double previousTime;
+    private DistributionType distributionType;
     private double[] systemTimeConfidence;
 
     private double[] queueTimeConfidence;
@@ -73,13 +77,14 @@ public class GasStation {
     }
     */
 
-    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime) {
+    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime,DistributionType distributionType) {
         this.numServers = numServers;
         this.queueLength = queueLength;
         this.numStates = numStates;
         this.maxCars = maxCars;
         this.meanArrivalInterval = meanArrivalInterval;
         this.meanServiceTime = meanServiceTime;
+        this.distributionType=distributionType;
 
         queueStartTimes = new ArrayList<>();
         systemTimeList = new ArrayList<>();
@@ -101,6 +106,8 @@ public class GasStation {
         i = 0;
         time = 0.0;
         previousTime = 0.0;
+
+
     }
 
     public void simulate() {
@@ -195,7 +202,7 @@ public class GasStation {
         return Math.sqrt(variance);
     }
 
-    private void processArrivalEvent(double eventTime) {
+ /*   private void processArrivalEvent(double eventTime) {
         if (i < maxCars) {
             double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
             eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
@@ -218,6 +225,47 @@ public class GasStation {
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
         //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
     }
+*/
+ private void processArrivalEvent(double eventTime) {
+     if (i < maxCars) {
+         double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
+         eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
+     } else {
+         return; // Повертаємося, якщо кількість автомобілів досягає максимального значення
+     }
+     // Збільшуємо лічильник обслужених автомобілі
+     i++;
+     if (numServers > servicedCars.size()) {   // directly enter servive
+        // double serviceTime = exponentialDistribution(meanServiceTime);
+         double serviceTime = calculateServiceTime();
+         eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
+         servicedCars.add(new Car(eventTime, 0.0, serviceTime));
+     } else if (queueStartTimes.size() < queueLength) {   // enter waiting queue
+         queueStartTimes.add(eventTime);
+         // Зберігаємо час початку очікування в черзі для автомобіля
+
+     } else {  // arrival is blocked (deflected)
+         k++;
+     }
+     arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
+     //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
+ }
+
+ private double calculateServiceTime(){
+     if(distributionType==DistributionType.GEOMETRIC){
+         return geometricDistribution(meanServiceTime);
+     }
+     else if(distributionType==DistributionType.ERLANG){
+         return erlangDistribution(meanServiceTime,2);
+     }
+     else if(distributionType==DistributionType.EXPONENTIAL){
+         return exponentialDistribution(meanServiceTime);
+     }
+     else {
+         System.out.println("Error: Distribution is not implemented");
+     }
+     return 1;
+ }
 
     private void processDepartureEvent(double eventTime) {
         // Збільшуємо лічильник обслуженихавтомобілів
@@ -236,7 +284,9 @@ public class GasStation {
 
         // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
         if (!queueStartTimes.isEmpty()) {
-            double serviceTime = exponentialDistribution(meanServiceTime);
+            //double serviceTime = exponentialDistribution(meanServiceTime);
+           // double serviceTime = geometricDistribution(meanServiceTime);
+            double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             // if (!queueStartTimes.isEmpty()) {
             // Додаємо час очікування в черзі до списку
@@ -311,7 +361,25 @@ public class GasStation {
 
     private double exponentialDistribution(double mean) {
         Random random = new Random();
-        return -mean * Math.log(1 - random.nextDouble());
+        return mean * -log(1 - random.nextDouble());
+    }
+
+    private double erlangDistribution(double mean, int k) {
+        Random random = new Random();
+        double sample = exponentialDistribution(mean);
+        for(int i=1; i<k; i++) {
+            sample +=exponentialDistribution(mean);
+        }
+        return sample/k;
+    }
+
+    private double geometricDistribution(double mean) {
+        Random random = new Random();
+        //return (int) Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-p));
+
+        return Math.round(exponentialDistribution(mean));// correct
+        // return mean * Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-0.999999));
+        // return mean * ceil(log(1-random.nextDouble()) / log(1-mean));
     }
 
     private double[] calculateConfidenceInterval(List<Double> values, int level) {

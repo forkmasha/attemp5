@@ -9,7 +9,7 @@ public class GasStationSimulationApp {
         int numServers = 5;
         int queueLength = 10;
         int numStates = numServers + queueLength + 1;
-        int maxCars = 5000;
+        int maxCars = 50000;
         double meanServiceTime = 0.5;
 
         List<Double> arrivalRates = new ArrayList<>();
@@ -21,9 +21,11 @@ public class GasStationSimulationApp {
         List<double[]> queueTimesConfidences = new ArrayList<>();
         List<double[]> serviceTimesConfidences = new ArrayList<>();
 
-        for (double arrivalRate = 0.5; arrivalRate <= 25; arrivalRate += 0.5) {
-            GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime);
-            GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime);
+        DistributionType distributionType=DistributionType.GEOMETRIC;
+
+        for (double arrivalRate = 0.5; arrivalRate <= 50; arrivalRate += 0.5) {
+            GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime,distributionType);
+            GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime,distributionType);
             gasStation.simulate();
             arrivalRates.add(arrivalRate);
 
@@ -37,7 +39,7 @@ public class GasStationSimulationApp {
             serviceTimesConfidences.add(gasStation.getServiceTimeConfidence());
         }
 
-        GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime);
+        GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime,distributionType);
         gasStation.drawGraph(arrivalRates, meanSystemTimes, systemTimesConfidences, meanQueueTimes, queueTimesConfidences, meanServiceTimes, serviceTimesConfidences);
     }
 }
