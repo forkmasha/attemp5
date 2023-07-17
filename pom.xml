@@ -1,10 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.example</groupId>
+  <groupId>org.simulation</groupId>
   <artifactId>attemp5</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <name>Archetype - untitled1q</name>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -12,8 +11,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>8</source>
-          <target>8</target>
+          <source>14</source>
+          <target>14</target>
         </configuration>
       </plugin>
     </plugins>
