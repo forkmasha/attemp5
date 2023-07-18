@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static java.lang.Math.log;
+
 public class GasStation {
     private final int numServers;
     private final int queueLength;
@@ -17,14 +19,10 @@ public class GasStation {
     private final int maxCars;
     private double meanArrivalInterval;
     private final double meanServiceTime;
-
-//    private double totalCarsInSystem;
-//    private double totalCarsInQueue;
-
+    private DistributionType distributionType;
     private List<Double> systemTimes;
     private List<Double> queueTimes;
     private List<Double> serviceTimes;
-    //private List<double[]> systemTimesConfidences;
     private List<Double> systemTimeList;
     private List<Double> queueTimeList;
 
@@ -35,35 +33,22 @@ public class GasStation {
     private int numberOfArrivedCars;
     private double time;
     private double previousTime;
-//    private double[] systemTimeConfidence;
-
-//    private double[] queueTimeConfidence;
-//    private double[] serviceTimeConfidence;
     private List<Double> queueStartTimes;
-
     private List<Double> arrivalRateList;
-
-//    ToDo
-    private List<Double> meanSystemTimeList;
-
     public Statistics getStatistics() {
         return statistics;
     }
-
     private Statistics statistics;
 
-    /* public List<double[]> getSystemTimesConfidences() {
-        return systemTimesConfidences;
-    }
-    */
-
-    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime) {
+    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval,
+                      double meanServiceTime, DistributionType distributionType) {
         this.numServers = numServers;
         this.queueLength = queueLength;
         this.numStates = numStates;
         this.maxCars = maxCars;
         this.meanArrivalInterval = meanArrivalInterval;
         this.meanServiceTime = meanServiceTime;
+        this.distributionType=distributionType;
 
         queueStartTimes = new ArrayList<>();
         systemTimeList = new ArrayList<>();
@@ -71,20 +56,10 @@ public class GasStation {
         systemTimes = new ArrayList<>();
         queueTimes = new ArrayList<>();
         serviceTimes = new ArrayList<>();
-        //systemTimesConfidences = new ArrayList<>();
-
         queueTimeList = new ArrayList<>();
-
         arrivalRateList = new ArrayList<>();
-        //meanSystemTimeList = new ArrayList<>();
-
         eventStack = new EventStack();
         servicedCars = new ArrayList<>();
-//        numberOfBlockedCars = 0;
-//        numberOfDeparturedCars = 0;
-//        numberOfArrivedCars = 0;
-//        time = 0.0;
-//        previousTime = 0.0;
     }
 
     public void simulate() {
@@ -149,28 +124,6 @@ public class GasStation {
             car.updateCarTimes(deltaTime);
             // car.tinQueue += deltaTime;
         }
-
-        //ToDo
-        // Not used
-//        totalCarsInSystem += servicedCars.size() * deltaTime;
-//        totalCarsInQueue += Math.max(0, servicedCars.size() - numServers) * deltaTime;
-
-
-        // Зберігаємо часи перебування в системі та черзі для обліку середніх значень
-        /* if (!servicedCars.isEmpty()) {
-            // double lastCarTime = servicedCars.get(servicedCars.size() - 1).tinSys;
-            // double queueTime = Math.max(0, lastCarTime - servicedCars.get(0).tinSys);
-            //systemTimes.add(lastCarTime);
-            // queueTimes.add(queueTime);
-
-            // Зберігаємо час перебування в системі для кожного автомобіля
-            for (Car car : servicedCars) {
-                systemTimeList.add(car.tinSys);
-            }
-            for (Car car : servicedCars) {
-                queueTimeList.add(car.tinQueue);
-            }
-        } */
     }
 
     private void processArrivalEvent(double eventTime) {
@@ -183,7 +136,8 @@ public class GasStation {
         // Збільшуємо лічильник обслужених автомобілі
         numberOfArrivedCars++;
         if (numServers > servicedCars.size()) {   // directly enter servive
-            double serviceTime = exponentialDistribution(meanServiceTime);
+            // double serviceTime = exponentialDistribution(meanServiceTime);
+            double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             servicedCars.add(new Car(eventTime, 0.0, serviceTime));
         } else if (queueStartTimes.size() < queueLength) {   // enter waiting queue
@@ -194,7 +148,22 @@ public class GasStation {
             numberOfBlockedCars++;
         }
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
-        //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
+    }
+
+    private double calculateServiceTime(){
+        if(distributionType== DistributionType.GEOMETRIC){
+            return geometricDistribution(meanServiceTime);
+        }
+        else if(distributionType== DistributionType.ERLANG){
+            return erlangDistribution(meanServiceTime,2);
+        }
+        else if(distributionType== DistributionType.EXPONENTIAL){
+            return exponentialDistribution(meanServiceTime);
+        }
+        else {
+            System.out.println("Error: Distribution is not implemented");
+        }
+        return 1;
     }
 
     private void processDepartureEvent(double eventTime) {
@@ -214,9 +183,8 @@ public class GasStation {
 
         // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
         if (!queueStartTimes.isEmpty()) {
-            double serviceTime = exponentialDistribution(meanServiceTime);
+            double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
-            // if (!queueStartTimes.isEmpty()) {
             // Додаємо час очікування в черзі до списку
             double queueTime = eventTime - queueStartTimes.get(0);
             queueTimes.add(queueTime);
@@ -228,15 +196,25 @@ public class GasStation {
 
     private double exponentialDistribution(double mean) {
         Random random = new Random();
-        return -mean * Math.log(1 - random.nextDouble());
+        return mean * -log(1 - random.nextDouble());
+    }
+
+    private double erlangDistribution(double mean, int k) {
+        Random random = new Random();
+        double sample = exponentialDistribution(mean);
+        for(int i=1; i<k; i++) {
+            sample +=exponentialDistribution(mean);
+        }
+        return sample/k;
+    }
+
+    private double geometricDistribution(double mean) {
+        Random random = new Random();
+        return Math.round(exponentialDistribution(mean));// correct
     }
 
     public List<Double> getArrivalRateList() {
         return arrivalRateList;
-    }
-
-    public List<Double> getMeanSystemTimeList() {
-        return meanSystemTimeList;
     }
 
     public void setMeanArrivalInterval(double meanArrivalInterval) {
@@ -284,6 +262,3 @@ public class GasStation {
     }
 
 }
-
-
-
