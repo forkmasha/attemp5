@@ -110,7 +110,6 @@ public class Graph {
             dataset.addSeries(2 * xValues.size() + i + 3, barData);
             renderer.setSeriesPaint(2 * xValues.size() + i + 3, BLUE);
         }
-
         chartPanel.repaint();
     }
 }

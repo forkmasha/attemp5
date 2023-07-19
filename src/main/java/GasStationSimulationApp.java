@@ -12,6 +12,17 @@ public class GasStationSimulationApp {
         int maxCars = 50000;
         double meanServiceTime = 0.5;
 
+        int count = 100000;
+        double samples[] = new double[count];
+        double pdf[] = new double[count];
+        Distribution distribution = new ErlangDistribution(); // Choose the desired distribution type here
+        double mean = 1.0;
+        double xMax = 10.0; // Set the maximum x value for the PDF here
+        samples = distribution.getSamples(mean, count);
+        pdf = distribution.getPDF(mean, xMax);
+        GasStationSimulation.generateServiceTimeHistogram(samples, pdf);
+
+
         List<Double> arrivalRates = new ArrayList<>();
         List<Double> meanSystemTimes = new ArrayList<>();
         List<Double> meanQueueTimes = new ArrayList<>();
@@ -21,7 +32,7 @@ public class GasStationSimulationApp {
         List<double[]> queueTimesConfidences = new ArrayList<>();
         List<double[]> serviceTimesConfidences = new ArrayList<>();
 
-        DistributionType distributionType=DistributionType.UNIFORM;
+        DistributionType distributionType=DistributionType.BETA;
 
         for (double arrivalRate = 0.5; arrivalRate <= 50; arrivalRate += 0.5) {
             GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime,distributionType);
@@ -42,5 +53,4 @@ public class GasStationSimulationApp {
         GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime,distributionType);
         gasStation.drawGraph(arrivalRates, meanSystemTimes, systemTimesConfidences, meanQueueTimes, queueTimesConfidences, meanServiceTimes, serviceTimesConfidences);
     }
-
 }

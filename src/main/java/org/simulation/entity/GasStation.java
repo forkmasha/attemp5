@@ -282,7 +282,6 @@ public class GasStation {
         sum /= i;
         return sum;
     }
-
 }
 
 

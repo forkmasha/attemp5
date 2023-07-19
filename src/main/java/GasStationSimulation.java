@@ -10,21 +10,20 @@ import javax.swing.*;
 import java.util.Random;
 
 import static java.lang.Math.log;
-
 public class GasStationSimulation {
-    public static void main(String[] args) {
-        int count = 100000;
-        double samples[]=new double[count];
-        double pdf[]=new double[count];
-        for (int i=0;i<count;i++){
-            samples[i]=exponentialDistribution(1.0);
+    //public static void main(String[] args) {
+       // int count = 100000;
+       // double samples[]=new double[count];
+        //double pdf[]=new double[count];
+        //for (int i=0;i<count;i++){
+            //samples[i]=exponentialDistribution(1.0);
             //samples[i]=uniformDistribution(0,2);
            // samples[i]=erlangDistribution(1,2);
             //samples[i]=geometricDistribution(1);
-        }
+     //  }
        // pdf=calculateExponentialPD(1.0);
-        generateServiceTimeHistogram(samples,pdf);
-    }
+        //generateServiceTimeHistogram(samples,pdf);
+    //}
     public static void generateServiceTimeHistogram(double samples[],double curve[]) {
 
         HistogramDataset dataset = new HistogramDataset();
@@ -44,31 +43,6 @@ public class GasStationSimulation {
         frame.add(chartPanel);
         frame.pack();
         frame.setVisible(true);
-    }
-    public static double exponentialDistribution(double mean) {
-        Random random = new Random();
-        return mean * -log(1 - random.nextDouble());
-    }
-    public static double erlangDistribution(double mean, int k) {
-        Random random = new Random();
-        double sample = exponentialDistribution(mean);
-        for (int i = 1; i < k; i++) {
-            sample += exponentialDistribution(mean);
-        }
-        return sample / k;
-    }
-
-    public static double geometricDistribution(double mean) {
-        Random random = new Random();
-        //return (int) Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-p));
-        return Math.round(exponentialDistribution(mean));// correct
-        // return mean * Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-0.999999));
-        // return mean * ceil(log(1-random.nextDouble()) / log(1-mean));
-    }
-
-    public static double uniformDistribution(double min, double max) {
-        Random random = new Random();
-        return min + (max - min) * random.nextDouble();
     }
     private int numServers;
     private int queueLength;
@@ -90,9 +64,35 @@ public class GasStationSimulation {
         this.distributionType=distributionType;
     }
 
+    public static double exponentialDistribution(double mean) {
+        Random random = new Random();
+        return mean * -log(1 - random.nextDouble());
+    }
+
+    public static double erlangDistribution(double mean, int k) {
+        Random random = new Random();
+        double sample = exponentialDistribution(mean);
+        for (int i = 1; i < k; i++) {
+            sample += exponentialDistribution(mean);
+        }
+        return sample / k;
+    }
+
+    public static double geometricDistribution(double mean) {
+        Random random = new Random();
+        //return (int) Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-p));
+        return Math.round(exponentialDistribution(mean));// correct
+        // return mean * Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-0.999999));
+        // return mean * ceil(log(1-random.nextDouble()) / log(1-mean));
+    }
+    public static double uniformDistribution(double min, double max) {
+        Random random = new Random();
+        return min + (max - min) * random.nextDouble();
+    }
+
+
     public void runSimulation() {
         GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime,distributionType);
         gasStation.simulate();
-
     }
 }

@@ -1,4 +1,3 @@
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -8,20 +7,14 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.ui.ApplicationFrame;
-
 import javax.swing.*;
 
 import static java.awt.Color.*;
 import static java.lang.Math.log;
-
 
 public class GasStation {
     private int numServers;
@@ -163,7 +156,7 @@ public class GasStation {
             car.tinSys += deltaTime;
             // car.tinQueue += deltaTime;
         }
-        ;
+
         totalCarsInSystem += servicedCars.size() * deltaTime;
         totalCarsInQueue += Math.max(0, servicedCars.size() - numServers) * deltaTime;
 
@@ -231,7 +224,13 @@ public class GasStation {
             double min = 0.0;
             double max = 2*meanServiceTime;
             return uniformDistribution(min, max);
-        } else {
+        }
+        else if(distributionType==DistributionType.BETA){
+                double alpha = 5.0;
+                double beta = 2.0;
+                return betaDistribution(alpha, beta);
+        }
+            else {
             System.out.println("Error: Distribution is not implemented");
         }
         return 1;
@@ -339,22 +338,43 @@ public class GasStation {
 
     public double geometricDistribution(double mean) {
         Random random = new Random();
-        //return (int) Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-p));
         return Math.round(exponentialDistribution(mean));// correct
-        // return mean * Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-0.999999));
-        // return mean * ceil(log(1-random.nextDouble()) / log(1-mean));
     }
 
     public double uniformDistribution(double min, double max) {
         Random random = new Random();
         return min + (max - min) * random.nextDouble();
     }
+    /*public double gammaDistribution(double alpha, double beta) {
+        Random random = new Random();
+        double sum = 0.0;
+        for (int i = 0; i < alpha; i++) {
+            sum += exponentialDistribution(beta);
+        }
+        return sum;
+    }*/
+
+    public double gammaDistribution(double shape, double scale) {
+        Random random = new Random();
+        double shapeFloor = Math.floor(shape);
+        double fraction = shape - shapeFloor;
+        double result = 0.0;
+        for (int i = 0; i < shapeFloor; i++) {
+            result += -Math.log(random.nextDouble());
+        }
+        if (fraction > 0) {
+            result += -Math.log(random.nextDouble()) * fraction;
+        }
+        return result * scale;
+    }
+    public double betaDistribution(double alpha, double beta) {
+        double gamma1 = gammaDistribution(alpha, 1.0);
+        double gamma2 = gammaDistribution(beta, 1.0);
+        return gamma1 / (gamma1 + gamma2);
+    }
 
     private double[] calculateConfidenceInterval(List<Double> values, int level) {
 
-        //SwingUtilities.invokeLater(() -> {
-        //  JFrame frame = new JFrame("CriticalValueTable");
-        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         double[][] data = {
                 {1, 3.078, 6.314, 12.706, 31.821, 63.65},
                 {2, 1.886, 2.920, 4.303, 6.965, 9.925},
@@ -652,153 +672,13 @@ public class GasStation {
         chartPanel.repaint();
     }
 
-    /*private void createServiceTimeHistogram(List<Double> serviceTimes) {
-        // Create a HistogramDataset
-        HistogramDataset dataset = new HistogramDataset();
-        // Set the number of bins for the histogram
-        int numBins = 10; // Adjust the number of bins as per your preference
-        // Add the service times to the dataset
-        double[] serviceTimeArray = serviceTimes.stream().mapToDouble(Double::doubleValue).toArray();
-        dataset.addSeries("Service Times", serviceTimeArray, numBins);
-
-        // Create the chart
-        JFreeChart chart = ChartFactory.createHistogram(
-                "Service Time Histogram", // Chart title
-                "Service Time", // X-axis label
-                "Frequency", // Y-axis label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL,
-                true, // Show legend
-                true, // Use tooltips
-                false // Generate URLs
-        );
-
-        // Create a ChartPanel to display the chart
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
-
-        // Create a new JFrame to hold the chart
-        JFrame frame = new JFrame("Service Time Histogram");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.getContentPane().add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);/*
-    }
-     */
-
-   /* public void generateServiceTimeHistogram() {
-        // Create a dataset for the histogram
-        HistogramDataset dataset = new HistogramDataset();
-        dataset.setType(HistogramType.FREQUENCY);
-
-        // Generate service times for each distribution type
-        double[] exponentialData = new double[1000];
-        double[] erlangData = new double[1000];
-        double[] geometricData = new double[1000];
-        double[] uniformData = new double[1000];
-
-        for (int i = 0; i < 1000; i++) {
-            exponentialData[i] = exponentialDistribution(meanServiceTime);
-            erlangData[i] = erlangDistribution(meanServiceTime, 2);
-            geometricData[i] = geometricDistribution(meanServiceTime);
-            uniformData[i] = uniformDistribution(0.0, 1.0);
-        }
-
-        // Add the generated data to the dataset
-        double binWidth = 0.1; // bin width
-        dataset.addSeries("Exponential", exponentialData, 10, 0.0, meanServiceTime * 3);  the range
-        dataset.addSeries("Erlang", erlangData, 10, 0.0, meanServiceTime * 3);
-        dataset.addSeries("Geometric", geometricData, 10, 0.0, meanServiceTime * 3);
-        dataset.addSeries("Uniform", uniformData, 10, 0.0, 1.0);
-
-        // Create the histogram chart
-        JFreeChart chart = ChartFactory.createHistogram("Service Time Distribution", "Service Time", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
-        chart.setBackgroundPaint(new Color(255, 255, 255, 0)); // Set the chart background color to transparent
-
-        // Set the fill paint of the plot to transparent
-        chart.getPlot().setBackgroundPaint(new Color(255, 255, 255, 0));
-
-        // Create a chart panel and display the chart in a frame
-        ChartPanel chartPanel = new ChartPanel(chart);
-        JFrame frame = new JFrame("Service Time Histogram");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
-    }*/
-
- /*   public void generateServiceTimeHistogram() {
-        // Create a dataset for the histogram
-        HistogramDataset dataset = new HistogramDataset();
-        dataset.setType(HistogramType.RELATIVE_FREQUENCY);
-
-        // Generate service times for each distribution type
-        double[] exponentialData = new double[1000];
-        double[] erlangData = new double[1000];
-        double[] geometricData = new double[1000];
-        double[] uniformData = new double[1000];
-
-        for (int i = 0; i < 1000; i++) {
-            exponentialData[i] = exponentialDistribution(meanServiceTime);
-            erlangData[i] = erlangDistribution(meanServiceTime, 2);
-            geometricData[i] = geometricDistribution(meanServiceTime);
-            uniformData[i] = uniformDistribution(0.0, 1.0);
-        }
-
-        // Add the generated data to the dataset
-        dataset.addSeries("Exponential", exponentialData, 10); // 10 is the number of bins
-        dataset.addSeries("Erlang", erlangData, 10);
-        dataset.addSeries("Geometric", geometricData, 10);
-        dataset.addSeries("Uniform", uniformData, 10);
-
-        // Create the histogram chart
-        JFreeChart chart = ChartFactory.createHistogram("Service Time Distribution", "Service Time", "Relative Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
-
-        // Customize the histogram appearance
-        XYPlot plot = (XYPlot) chart.getPlot();
-        XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
-        renderer.setBarPainter(new StandardXYBarPainter());
-        renderer.setShadowVisible(false);
-
-        // Set different colors for each histogram
-        renderer.setSeriesPaint(0, new Color(31, 119, 180, 128));   // Exponential
-        renderer.setSeriesPaint(1, new Color(255, 127, 14, 128));   // Erlang
-        renderer.setSeriesPaint(2, new Color(44, 160, 44, 128));    // Geometric
-        renderer.setSeriesPaint(3, new Color(214, 39, 40, 128));    // Uniform
-
-        // Create a chart panel and display the chart in a frame
-        ChartPanel chartPanel = new ChartPanel(chart);
-        JFrame frame = new JFrame("Service Time Histogram");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
-}*/
 
     public void generateServiceTimeHistogram(double samples[]) {
         // Create a dataset for the histogram
         HistogramDataset dataset = new HistogramDataset();
         dataset.setType(HistogramType.FREQUENCY);
-
-        // Generate service times for each distribution type
-        //double[] exponentialData = new double[1000];
-        //double[] erlangData = new double[1000];
-        //double[] geometricData = new double[1000];
-        //double[] uniformData = new double[1000];
-
-        /*for (int i = 0; i < 1000; i++) {
-            exponentialData[i] = exponentialDistribution(meanServiceTime);
-            erlangData[i] = erlangDistribution(meanServiceTime, 2);
-            geometricData[i] = geometricDistribution(meanServiceTime);
-            uniformData[i] = uniformDistribution(0.0, 1.0);
-        }*/
-
         // Add the generated data to the dataset
         dataset.addSeries("Histogram", samples, 100); // 10 is the number of bins
-       // dataset.addSeries("Erlang", erlangData, 10);
-        //dataset.addSeries("Geometric", geometricData, 10);
-        //dataset.addSeries("Uniform", uniformData, 10);
-
         // Create the histogram chart
         JFreeChart chart = ChartFactory.createHistogram("Distribution", "Values", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
 
@@ -807,9 +687,6 @@ public class GasStation {
         chart.getPlot().setBackgroundPaint(ChartColor.WHITE); // Set background color
 
         chart.getXYPlot().getRenderer().setSeriesPaint(0, new ChartColor(0, 122, 255)); // Exponential - Blue
-       // chart.getXYPlot().getRenderer().setSeriesPaint(1, new ChartColor(255, 0, 0)); // Erlang - Red
-        //chart.getXYPlot().getRenderer().setSeriesPaint(2, new ChartColor(0, 255, 0)); // Geometric - Green
-       // chart.getXYPlot().getRenderer().setSeriesPaint(3, new ChartColor(255, 153, 0)); // Uniform - Orange
 
         // Create a chart panel and display the chart in a frame
         ChartPanel chartPanel = new ChartPanel(chart);
