@@ -3,28 +3,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
-
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
+import org.jfree.chart.*;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.statistics.HistogramDataset;
+import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.DefaultXYDataset;
-
+import org.jfree.ui.ApplicationFrame;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 
 import static java.awt.Color.*;
-import static java.lang.Math.ceil;
 import static java.lang.Math.log;
+
 
 public class GasStation {
     private int numServers;
@@ -53,11 +50,9 @@ public class GasStation {
     private double previousTime;
     private DistributionType distributionType;
     private double[] systemTimeConfidence;
-
     private double[] queueTimeConfidence;
     private double[] serviceTimeConfidence;
     private List<Double> queueStartTimes;
-
     private List<Double> arrivalRateList;
     private List<Double> meanSystemTimeList;
 
@@ -72,19 +67,19 @@ public class GasStation {
     public double[] getServiceTimeConfidence() {
         return serviceTimeConfidence;
     }
+
     /* public List<double[]> getSystemTimesConfidences() {
         return systemTimesConfidences;
     }
     */
-
-    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime,DistributionType distributionType) {
+    public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime, DistributionType distributionType) {
         this.numServers = numServers;
         this.queueLength = queueLength;
         this.numStates = numStates;
         this.maxCars = maxCars;
         this.meanArrivalInterval = meanArrivalInterval;
         this.meanServiceTime = meanServiceTime;
-        this.distributionType=distributionType;
+        this.distributionType = distributionType;
 
         queueStartTimes = new ArrayList<>();
         systemTimeList = new ArrayList<>();
@@ -95,7 +90,6 @@ public class GasStation {
         //systemTimesConfidences = new ArrayList<>();
 
         queueTimeList = new ArrayList<>();
-
         arrivalRateList = new ArrayList<>();
         //meanSystemTimeList = new ArrayList<>();
 
@@ -106,12 +100,9 @@ public class GasStation {
         i = 0;
         time = 0.0;
         previousTime = 0.0;
-
-
     }
 
     public void simulate() {
-
         System.out.println("\n#########################");
         System.out.println("Simulation Parameters");
         System.out.println("#########################");
@@ -141,6 +132,7 @@ public class GasStation {
         eventStack.events.clear();
         eventStack.addEvent(new ArrivalEvent(0.0));   // insert initial arrival
 
+
         // Головний цикл моделювання
         while (!eventStack.isEmpty()) {
             // Отримуємо наступну подію зі стеку
@@ -163,6 +155,7 @@ public class GasStation {
         }
         // Генеруємо статистику симуляції
         generateStatistics();
+      //  generateServiceTimeHistogram();
     }
 
     private void updateCarTimes(double deltaTime) {
@@ -170,9 +163,10 @@ public class GasStation {
             car.tinSys += deltaTime;
             // car.tinQueue += deltaTime;
         }
-
+        ;
         totalCarsInSystem += servicedCars.size() * deltaTime;
         totalCarsInQueue += Math.max(0, servicedCars.size() - numServers) * deltaTime;
+
 
         // Зберігаємо часи перебування в системі та черзі для обліку середніх значень
         /* if (!servicedCars.isEmpty()) {
@@ -202,7 +196,7 @@ public class GasStation {
         return Math.sqrt(variance);
     }
 
- /*   private void processArrivalEvent(double eventTime) {
+    private void processArrivalEvent(double eventTime) {
         if (i < maxCars) {
             double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
             eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
@@ -212,64 +206,39 @@ public class GasStation {
         // Збільшуємо лічильник обслужених автомобілі
         i++;
         if (numServers > servicedCars.size()) {   // directly enter servive
-            double serviceTime = exponentialDistribution(meanServiceTime);
+            // double serviceTime = exponentialDistribution(meanServiceTime);
+            double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             servicedCars.add(new Car(eventTime, 0.0, serviceTime));
         } else if (queueStartTimes.size() < queueLength) {   // enter waiting queue
             queueStartTimes.add(eventTime);
             // Зберігаємо час початку очікування в черзі для автомобіля
-
         } else {  // arrival is blocked (deflected)
             k++;
         }
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
         //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
     }
-*/
- private void processArrivalEvent(double eventTime) {
-     if (i < maxCars) {
-         double nextArrivalTime = eventTime + exponentialDistribution(meanArrivalInterval);
-         eventStack.addEvent(new ArrivalEvent(nextArrivalTime));
-     } else {
-         return; // Повертаємося, якщо кількість автомобілів досягає максимального значення
-     }
-     // Збільшуємо лічильник обслужених автомобілі
-     i++;
-     if (numServers > servicedCars.size()) {   // directly enter servive
-        // double serviceTime = exponentialDistribution(meanServiceTime);
-         double serviceTime = calculateServiceTime();
-         eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
-         servicedCars.add(new Car(eventTime, 0.0, serviceTime));
-     } else if (queueStartTimes.size() < queueLength) {   // enter waiting queue
-         queueStartTimes.add(eventTime);
-         // Зберігаємо час початку очікування в черзі для автомобіля
 
-     } else {  // arrival is blocked (deflected)
-         k++;
-     }
-     arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
-     //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
- }
-
- private double calculateServiceTime(){
-     if(distributionType==DistributionType.GEOMETRIC){
-         return geometricDistribution(meanServiceTime);
-     }
-     else if(distributionType==DistributionType.ERLANG){
-         return erlangDistribution(meanServiceTime,2);
-     }
-     else if(distributionType==DistributionType.EXPONENTIAL){
-         return exponentialDistribution(meanServiceTime);
-     }
-     else {
-         System.out.println("Error: Distribution is not implemented");
-     }
-     return 1;
- }
+    private double calculateServiceTime() {
+        if (distributionType == DistributionType.GEOMETRIC) {
+            return geometricDistribution(meanServiceTime);
+        } else if (distributionType == DistributionType.ERLANG) {
+            return erlangDistribution(meanServiceTime, 2);
+        } else if (distributionType == DistributionType.EXPONENTIAL) {
+            return exponentialDistribution(meanServiceTime);
+        } else if (distributionType == DistributionType.UNIFORM) {
+            double min = 0.0;
+            double max = 2*meanServiceTime;
+            return uniformDistribution(min, max);
+        } else {
+            System.out.println("Error: Distribution is not implemented");
+        }
+        return 1;
+    }
 
     private void processDepartureEvent(double eventTime) {
         // Збільшуємо лічильник обслуженихавтомобілів
-
         if (!servicedCars.isEmpty()) {
             Car departingCar = servicedCars.get(0);
             // systemTimes.add(departingCar.tinSys);
@@ -281,11 +250,8 @@ public class GasStation {
         } else {
             System.out.println("Error: Departure from empty System!");
         }
-
         // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
         if (!queueStartTimes.isEmpty()) {
-            //double serviceTime = exponentialDistribution(meanServiceTime);
-           // double serviceTime = geometricDistribution(meanServiceTime);
             double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             // if (!queueStartTimes.isEmpty()) {
@@ -307,12 +273,9 @@ public class GasStation {
         System.out.println("Simulation Statistics");
 
         // Збираємо дані про часи перебування в системі та черзі
-
         double meanQtime = calculateMean(queueTimes);
         double meanCtime = calculateMean(serviceTimes);
         double meanStime = calculateMean(systemTimes);
-        // double stdDevSystemTime = calculateStandardDeviation(systemTimeList);
-        // double stdDevQueueTime = calculateStandardDeviation(queueTimeList);
         double stdDevQueueTime = calculateStandardDeviation(queueTimes);
         double stdDevServiceTime = calculateStandardDeviation(serviceTimes);
         double stdDevSystemTime = calculateStandardDeviation(systemTimes);
@@ -349,6 +312,7 @@ public class GasStation {
         System.out.println("Confidence Interval (Stime): " + stimeConfidenceInterval[0] + " - " + stimeConfidenceInterval[1]);
 
         //drawGraph(arrivalRateList, meanSystemTimeList);
+        //createServiceTimeHistogram(serviceTimes);
     }
 
     private double calculateMean(List<Double> values) {
@@ -359,27 +323,31 @@ public class GasStation {
         return sum / values.size();
     }
 
-    private double exponentialDistribution(double mean) {
+    public double exponentialDistribution(double mean) {
         Random random = new Random();
         return mean * -log(1 - random.nextDouble());
     }
 
-    private double erlangDistribution(double mean, int k) {
+    public double erlangDistribution(double mean, int k) {
         Random random = new Random();
         double sample = exponentialDistribution(mean);
-        for(int i=1; i<k; i++) {
-            sample +=exponentialDistribution(mean);
+        for (int i = 1; i < k; i++) {
+            sample += exponentialDistribution(mean);
         }
-        return sample/k;
+        return sample / k;
     }
 
-    private double geometricDistribution(double mean) {
+    public double geometricDistribution(double mean) {
         Random random = new Random();
         //return (int) Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-p));
-
         return Math.round(exponentialDistribution(mean));// correct
         // return mean * Math.ceil(Math.log(1-random.nextDouble())/Math.log(1-0.999999));
         // return mean * ceil(log(1-random.nextDouble()) / log(1-mean));
+    }
+
+    public double uniformDistribution(double min, double max) {
+        Random random = new Random();
+        return min + (max - min) * random.nextDouble();
     }
 
     private double[] calculateConfidenceInterval(List<Double> values, int level) {
@@ -497,20 +465,13 @@ public class GasStation {
                 {999, 1.280, 1.645, 1.960, 2.330, 2.575},
         };
         String[] columnNames = {"Degrees of Freedom", "80%", "90%", "95%", "98%", "99%"};
-        // DefaultTableModel model = new DefaultTableModel(data, columnNames);
-        //   JTable criticalValueTable = new JTable(model);
-        //JScrollPane scrollPane = new JScrollPane(criticalValueTable);
-        //  frame.add(scrollPane);
-        //frame.setSize(500, 300);
-        //frame.setVisible(true);
-
         double mean = calculateMean(values);
         double stdDev = calculateStandardDeviation(values);
         //int level = 95;
         int levelID = 0;
         double zScore = 100;
 
-        switch(level) {
+        switch (level) {
             case 80:
                 levelID = 1;
                 break;
@@ -531,10 +492,9 @@ public class GasStation {
         }
 
         // Calculate the confidence interval
-        if ( values.size() > 105 ) {
+        if (values.size() > 105) {
             zScore = data[105][levelID]; // For a 95% confidence interval (assuming a large enough sample size)
-        }
-        else {
+        } else {
             zScore = data[values.size()][levelID]; // For a 95% confidence interval (assuming a large enough sample size)
         }
         double marginOfError = zScore * (stdDev / Math.sqrt(values.size()));
@@ -595,6 +555,7 @@ public class GasStation {
         sum /= i;
         return sum;
     }
+
     void drawGraph(List<Double> xValues, List<Double> meanValues1, List<double[]> confidenceInterval1, List<Double> meanValues2, List<double[]> confidenceInterval2,
                    List<Double> meanValues3, List<double[]> confidenceInterval3) {
         DefaultXYDataset dataset = new DefaultXYDataset();
@@ -690,7 +651,172 @@ public class GasStation {
 
         chartPanel.repaint();
     }
+
+    /*private void createServiceTimeHistogram(List<Double> serviceTimes) {
+        // Create a HistogramDataset
+        HistogramDataset dataset = new HistogramDataset();
+        // Set the number of bins for the histogram
+        int numBins = 10; // Adjust the number of bins as per your preference
+        // Add the service times to the dataset
+        double[] serviceTimeArray = serviceTimes.stream().mapToDouble(Double::doubleValue).toArray();
+        dataset.addSeries("Service Times", serviceTimeArray, numBins);
+
+        // Create the chart
+        JFreeChart chart = ChartFactory.createHistogram(
+                "Service Time Histogram", // Chart title
+                "Service Time", // X-axis label
+                "Frequency", // Y-axis label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL,
+                true, // Show legend
+                true, // Use tooltips
+                false // Generate URLs
+        );
+
+        // Create a ChartPanel to display the chart
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+
+        // Create a new JFrame to hold the chart
+        JFrame frame = new JFrame("Service Time Histogram");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(chartPanel);
+        frame.pack();
+        frame.setVisible(true);/*
+    }
+     */
+
+   /* public void generateServiceTimeHistogram() {
+        // Create a dataset for the histogram
+        HistogramDataset dataset = new HistogramDataset();
+        dataset.setType(HistogramType.FREQUENCY);
+
+        // Generate service times for each distribution type
+        double[] exponentialData = new double[1000];
+        double[] erlangData = new double[1000];
+        double[] geometricData = new double[1000];
+        double[] uniformData = new double[1000];
+
+        for (int i = 0; i < 1000; i++) {
+            exponentialData[i] = exponentialDistribution(meanServiceTime);
+            erlangData[i] = erlangDistribution(meanServiceTime, 2);
+            geometricData[i] = geometricDistribution(meanServiceTime);
+            uniformData[i] = uniformDistribution(0.0, 1.0);
+        }
+
+        // Add the generated data to the dataset
+        double binWidth = 0.1; // bin width
+        dataset.addSeries("Exponential", exponentialData, 10, 0.0, meanServiceTime * 3);  the range
+        dataset.addSeries("Erlang", erlangData, 10, 0.0, meanServiceTime * 3);
+        dataset.addSeries("Geometric", geometricData, 10, 0.0, meanServiceTime * 3);
+        dataset.addSeries("Uniform", uniformData, 10, 0.0, 1.0);
+
+        // Create the histogram chart
+        JFreeChart chart = ChartFactory.createHistogram("Service Time Distribution", "Service Time", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
+        chart.setBackgroundPaint(new Color(255, 255, 255, 0)); // Set the chart background color to transparent
+
+        // Set the fill paint of the plot to transparent
+        chart.getPlot().setBackgroundPaint(new Color(255, 255, 255, 0));
+
+        // Create a chart panel and display the chart in a frame
+        ChartPanel chartPanel = new ChartPanel(chart);
+        JFrame frame = new JFrame("Service Time Histogram");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.add(chartPanel);
+        frame.pack();
+        frame.setVisible(true);
+    }*/
+
+ /*   public void generateServiceTimeHistogram() {
+        // Create a dataset for the histogram
+        HistogramDataset dataset = new HistogramDataset();
+        dataset.setType(HistogramType.RELATIVE_FREQUENCY);
+
+        // Generate service times for each distribution type
+        double[] exponentialData = new double[1000];
+        double[] erlangData = new double[1000];
+        double[] geometricData = new double[1000];
+        double[] uniformData = new double[1000];
+
+        for (int i = 0; i < 1000; i++) {
+            exponentialData[i] = exponentialDistribution(meanServiceTime);
+            erlangData[i] = erlangDistribution(meanServiceTime, 2);
+            geometricData[i] = geometricDistribution(meanServiceTime);
+            uniformData[i] = uniformDistribution(0.0, 1.0);
+        }
+
+        // Add the generated data to the dataset
+        dataset.addSeries("Exponential", exponentialData, 10); // 10 is the number of bins
+        dataset.addSeries("Erlang", erlangData, 10);
+        dataset.addSeries("Geometric", geometricData, 10);
+        dataset.addSeries("Uniform", uniformData, 10);
+
+        // Create the histogram chart
+        JFreeChart chart = ChartFactory.createHistogram("Service Time Distribution", "Service Time", "Relative Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
+
+        // Customize the histogram appearance
+        XYPlot plot = (XYPlot) chart.getPlot();
+        XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
+        renderer.setBarPainter(new StandardXYBarPainter());
+        renderer.setShadowVisible(false);
+
+        // Set different colors for each histogram
+        renderer.setSeriesPaint(0, new Color(31, 119, 180, 128));   // Exponential
+        renderer.setSeriesPaint(1, new Color(255, 127, 14, 128));   // Erlang
+        renderer.setSeriesPaint(2, new Color(44, 160, 44, 128));    // Geometric
+        renderer.setSeriesPaint(3, new Color(214, 39, 40, 128));    // Uniform
+
+        // Create a chart panel and display the chart in a frame
+        ChartPanel chartPanel = new ChartPanel(chart);
+        JFrame frame = new JFrame("Service Time Histogram");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.add(chartPanel);
+        frame.pack();
+        frame.setVisible(true);
+}*/
+
+    public void generateServiceTimeHistogram(double samples[]) {
+        // Create a dataset for the histogram
+        HistogramDataset dataset = new HistogramDataset();
+        dataset.setType(HistogramType.FREQUENCY);
+
+        // Generate service times for each distribution type
+        //double[] exponentialData = new double[1000];
+        //double[] erlangData = new double[1000];
+        //double[] geometricData = new double[1000];
+        //double[] uniformData = new double[1000];
+
+        /*for (int i = 0; i < 1000; i++) {
+            exponentialData[i] = exponentialDistribution(meanServiceTime);
+            erlangData[i] = erlangDistribution(meanServiceTime, 2);
+            geometricData[i] = geometricDistribution(meanServiceTime);
+            uniformData[i] = uniformDistribution(0.0, 1.0);
+        }*/
+
+        // Add the generated data to the dataset
+        dataset.addSeries("Histogram", samples, 100); // 10 is the number of bins
+       // dataset.addSeries("Erlang", erlangData, 10);
+        //dataset.addSeries("Geometric", geometricData, 10);
+        //dataset.addSeries("Uniform", uniformData, 10);
+
+        // Create the histogram chart
+        JFreeChart chart = ChartFactory.createHistogram("Distribution", "Values", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
+
+        // Set colors and transparency for each series
+        chart.getPlot().setForegroundAlpha(0.6f); // Adjust transparency (0.0f - fully transparent, 1.0f - fully opaque)
+        chart.getPlot().setBackgroundPaint(ChartColor.WHITE); // Set background color
+
+        chart.getXYPlot().getRenderer().setSeriesPaint(0, new ChartColor(0, 122, 255)); // Exponential - Blue
+       // chart.getXYPlot().getRenderer().setSeriesPaint(1, new ChartColor(255, 0, 0)); // Erlang - Red
+        //chart.getXYPlot().getRenderer().setSeriesPaint(2, new ChartColor(0, 255, 0)); // Geometric - Green
+       // chart.getXYPlot().getRenderer().setSeriesPaint(3, new ChartColor(255, 153, 0)); // Uniform - Orange
+
+        // Create a chart panel and display the chart in a frame
+        ChartPanel chartPanel = new ChartPanel(chart);
+        JFrame frame = new JFrame("Histogram");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.add(chartPanel);
+        frame.pack();
+        frame.setVisible(true);
+    }
 }
-
-
-

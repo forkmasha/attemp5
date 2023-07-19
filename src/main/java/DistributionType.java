@@ -1,5 +1,6 @@
 public enum DistributionType {
     GEOMETRIC,
     EXPONENTIAL,
-    ERLANG
+    ERLANG,
+    UNIFORM
 }

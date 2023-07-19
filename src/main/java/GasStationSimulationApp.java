@@ -21,7 +21,7 @@ public class GasStationSimulationApp {
         List<double[]> queueTimesConfidences = new ArrayList<>();
         List<double[]> serviceTimesConfidences = new ArrayList<>();
 
-        DistributionType distributionType=DistributionType.GEOMETRIC;
+        DistributionType distributionType=DistributionType.UNIFORM;
 
         for (double arrivalRate = 0.5; arrivalRate <= 50; arrivalRate += 0.5) {
             GasStationSimulation gasStationSimulation = new GasStationSimulation(numServers, queueLength, numStates, maxCars, 1.0 / arrivalRate, meanServiceTime,distributionType);
@@ -42,4 +42,5 @@ public class GasStationSimulationApp {
         GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, 0.0, meanServiceTime,distributionType);
         gasStation.drawGraph(arrivalRates, meanSystemTimes, systemTimesConfidences, meanQueueTimes, queueTimesConfidences, meanServiceTimes, serviceTimesConfidences);
     }
+
 }
