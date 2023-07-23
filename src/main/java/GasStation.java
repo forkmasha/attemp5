@@ -8,8 +8,6 @@ import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.statistics.HistogramDataset;
-import org.jfree.data.statistics.HistogramType;
 import org.jfree.data.xy.DefaultXYDataset;
 import javax.swing.*;
 
@@ -61,10 +59,6 @@ public class GasStation {
         return serviceTimeConfidence;
     }
 
-    /* public List<double[]> getSystemTimesConfidences() {
-        return systemTimesConfidences;
-    }
-    */
     public GasStation(int numServers, int queueLength, int numStates, int maxCars, double meanArrivalInterval, double meanServiceTime, DistributionType distributionType) {
         this.numServers = numServers;
         this.queueLength = queueLength;
@@ -80,11 +74,9 @@ public class GasStation {
         systemTimes = new ArrayList<>();
         queueTimes = new ArrayList<>();
         serviceTimes = new ArrayList<>();
-        //systemTimesConfidences = new ArrayList<>();
 
         queueTimeList = new ArrayList<>();
         arrivalRateList = new ArrayList<>();
-        //meanSystemTimeList = new ArrayList<>();
 
         eventStack = new EventStack();
         servicedCars = new ArrayList<>();
@@ -120,7 +112,6 @@ public class GasStation {
         serviceTimes.clear();
 
         arrivalRateList.clear();
-        //meanSystemTimeList.clear();
 
         eventStack.events.clear();
         eventStack.addEvent(new ArrivalEvent(0.0));   // insert initial arrival
@@ -160,22 +151,6 @@ public class GasStation {
         totalCarsInSystem += servicedCars.size() * deltaTime;
         totalCarsInQueue += Math.max(0, servicedCars.size() - numServers) * deltaTime;
 
-
-        // Зберігаємо часи перебування в системі та черзі для обліку середніх значень
-        /* if (!servicedCars.isEmpty()) {
-            // double lastCarTime = servicedCars.get(servicedCars.size() - 1).tinSys;
-            // double queueTime = Math.max(0, lastCarTime - servicedCars.get(0).tinSys);
-            //systemTimes.add(lastCarTime);
-            // queueTimes.add(queueTime);
-
-            // Зберігаємо час перебування в системі для кожного автомобіля
-            for (Car car : servicedCars) {
-                systemTimeList.add(car.tinSys);
-            }
-            for (Car car : servicedCars) {
-                queueTimeList.add(car.tinQueue);
-            }
-        } */
     }
 
     private double calculateStandardDeviation(List<Double> values) {
@@ -199,7 +174,6 @@ public class GasStation {
         // Збільшуємо лічильник обслужених автомобілі
         i++;
         if (numServers > servicedCars.size()) {   // directly enter servive
-            // double serviceTime = exponentialDistribution(meanServiceTime);
             double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
             servicedCars.add(new Car(eventTime, 0.0, serviceTime));
@@ -210,7 +184,6 @@ public class GasStation {
             k++;
         }
         arrivalRateList.add(1.0 / meanArrivalInterval); // Calculate arrival rate from mean arrival interval
-        //meanSystemTimeList.add(calculateMean(systemTimeList));   // ?
     }
 
     private double calculateServiceTime() {
@@ -240,8 +213,6 @@ public class GasStation {
         // Збільшуємо лічильник обслуженихавтомобілів
         if (!servicedCars.isEmpty()) {
             Car departingCar = servicedCars.get(0);
-            // systemTimes.add(departingCar.tinSys);
-            // double carArrivalTime = departingCar.arrivalTime;
             systemTimes.add(departingCar.getTinQueue() + departingCar.getServiceTime());
             serviceTimes.add(departingCar.getServiceTime());
             servicedCars.remove(0); // Видаляємо перший автомобіль з черги
@@ -249,17 +220,16 @@ public class GasStation {
         } else {
             System.out.println("Error: Departure from empty System!");
         }
-        // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля з черги до стеку подій та записуємо час обслуговування черги
+        // Якщо стан системи перевищує кількість серверів, додаємо подію відправлення для автомобіля
+        // з черги до стеку подій та записуємо час обслуговування черги
         if (!queueStartTimes.isEmpty()) {
             double serviceTime = calculateServiceTime();
             eventStack.addEvent(new DepartureEvent(eventTime + serviceTime));
-            // if (!queueStartTimes.isEmpty()) {
             // Додаємо час очікування в черзі до списку
             double queueTime = eventTime - queueStartTimes.get(0);
             queueTimes.add(queueTime);
             queueStartTimes.remove(0); // Видаляємо перший час початку очікування з черги
             servicedCars.add(new Car(eventTime, queueTime, serviceTime));
-            // }
         }
     }
 
@@ -670,30 +640,5 @@ public class GasStation {
         }
 
         chartPanel.repaint();
-    }
-
-
-    public void generateServiceTimeHistogram(double samples[]) {
-        // Create a dataset for the histogram
-        HistogramDataset dataset = new HistogramDataset();
-        dataset.setType(HistogramType.FREQUENCY);
-        // Add the generated data to the dataset
-        dataset.addSeries("Histogram", samples, 100); // 10 is the number of bins
-        // Create the histogram chart
-        JFreeChart chart = ChartFactory.createHistogram("Distribution", "Values", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
-
-        // Set colors and transparency for each series
-        chart.getPlot().setForegroundAlpha(0.6f); // Adjust transparency (0.0f - fully transparent, 1.0f - fully opaque)
-        chart.getPlot().setBackgroundPaint(ChartColor.WHITE); // Set background color
-
-        chart.getXYPlot().getRenderer().setSeriesPaint(0, new ChartColor(0, 122, 255)); // Exponential - Blue
-
-        // Create a chart panel and display the chart in a frame
-        ChartPanel chartPanel = new ChartPanel(chart);
-        JFrame frame = new JFrame("Histogram");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
     }
 }

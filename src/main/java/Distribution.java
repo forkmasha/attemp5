@@ -10,15 +10,44 @@ import javax.swing.*;
 
 public abstract class Distribution {
 
-    public abstract double getSample(double mean);
+    private DistributionType type;
+    public double getSample(double mean) {
+        return 0;
+    }
+
     public abstract double[] getSamples(double mean, int count);
     public abstract double[] getPDF(double mean, double xMax);
 
-    public  void generateServiceTimeHistogram(double samples[]){
+    public static Distribution create(DistributionType type) {
+
+        switch (type) {
+            case GEOMETRIC -> {
+                return new GeometricDistribution();
+            }
+            case EXPONENTIAL -> {
+                return new ExponentialDistribution();
+            }
+            case ERLANG -> {
+                return new ErlangDistribution();
+            }
+            case UNIFORM -> {
+                return new UniformDistribution();
+            }
+            case BETA -> {
+                return new BetaDistribution();
+            }
+            default -> {
+                return null;
+            }
+
+        }
+    }
+
+    public static void generateHistogram(int bins, double samples[],double pdf[]){
         HistogramDataset dataset = new HistogramDataset();
         dataset.setType(HistogramType.FREQUENCY);
         // Add the generated data to the dataset
-        dataset.addSeries("Histogram", samples, 100); // 10 is the number of bins
+        dataset.addSeries("Histogram", samples, bins);
         // Create the histogram chart
         JFreeChart chart = ChartFactory.createHistogram("Distribution", "Values", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
 

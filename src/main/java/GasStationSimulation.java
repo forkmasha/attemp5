@@ -1,49 +1,8 @@
-import org.jfree.chart.ChartColor;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.statistics.HistogramDataset;
-import org.jfree.data.statistics.HistogramType;
-
-import javax.swing.*;
 import java.util.Random;
 
 import static java.lang.Math.log;
 public class GasStationSimulation {
-    //public static void main(String[] args) {
-       // int count = 100000;
-       // double samples[]=new double[count];
-        //double pdf[]=new double[count];
-        //for (int i=0;i<count;i++){
-            //samples[i]=exponentialDistribution(1.0);
-            //samples[i]=uniformDistribution(0,2);
-           // samples[i]=erlangDistribution(1,2);
-            //samples[i]=geometricDistribution(1);
-     //  }
-       // pdf=calculateExponentialPD(1.0);
-        //generateServiceTimeHistogram(samples,pdf);
-    //}
-    public static void generateServiceTimeHistogram(double samples[],double curve[]) {
 
-        HistogramDataset dataset = new HistogramDataset();
-        dataset.setType(HistogramType.FREQUENCY);
-        dataset.addSeries("Histogram", samples, 100); // 10 is the number of bins
-        JFreeChart chart = ChartFactory.createHistogram("Distribution", "Values", "Frequency", dataset, PlotOrientation.VERTICAL, true, true, false);
-
-        chart.getPlot().setForegroundAlpha(0.6f); // Adjust transparency (0.0f - fully transparent, 1.0f - fully opaque)
-        chart.getPlot().setBackgroundPaint(ChartColor.WHITE); // Set background color
-        chart.getXYPlot().getRenderer().setSeriesPaint(0, new ChartColor(0, 122, 255)); // Exponential - Blue
-
-
-        // Create a chart panel and display the chart in a frame
-        ChartPanel chartPanel = new ChartPanel(chart);
-        JFrame frame = new JFrame("Histogram");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.add(chartPanel);
-        frame.pack();
-        frame.setVisible(true);
-    }
     private int numServers;
     private int queueLength;
     private int numStates;
@@ -89,7 +48,19 @@ public class GasStationSimulation {
         Random random = new Random();
         return min + (max - min) * random.nextDouble();
     }
-
+    public static double gammaDistribution(double shape, double scale) {
+        Random random = new Random();
+        double shapeFloor = Math.floor(shape);
+        double fraction = shape - shapeFloor;
+        double result = 0.0;
+        for (int i = 0; i < shapeFloor; i++) {
+            result += -Math.log(random.nextDouble());
+        }
+        if (fraction > 0) {
+            result += -Math.log(random.nextDouble()) * fraction;
+        }
+        return result * scale;
+    }
 
     public void runSimulation() {
         GasStation gasStation = new GasStation(numServers, queueLength, numStates, maxCars, meanArrivalInterval, meanServiceTime,distributionType);

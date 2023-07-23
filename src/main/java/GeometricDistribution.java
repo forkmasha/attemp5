@@ -1,8 +1,12 @@
 import java.util.Random;
 
 class GeometricDistribution extends Distribution {
-    @Override
+
     public double getSample(double mean) {
+        Random random = new Random();
+        return Math.round(exponentialDistribution(mean));
+    }
+    public static double createSample(double mean) {
         Random random = new Random();
         return Math.round(exponentialDistribution(mean));
     }
@@ -30,7 +34,7 @@ class GeometricDistribution extends Distribution {
 
         return pdf;
     }
-    private double exponentialDistribution(double mean) {
+    private static double exponentialDistribution(double mean) {
         Random random = new Random();
         return mean * (-Math.log(1 - random.nextDouble()));
     }

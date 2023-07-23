@@ -18,13 +18,9 @@ public class GasStation {
     private double meanArrivalInterval;
     private final double meanServiceTime;
 
-//    private double totalCarsInSystem;
-//    private double totalCarsInQueue;
-
     private List<Double> systemTimes;
     private List<Double> queueTimes;
     private List<Double> serviceTimes;
-    //private List<double[]> systemTimesConfidences;
     private List<Double> systemTimeList;
     private List<Double> queueTimeList;
 
@@ -35,10 +31,7 @@ public class GasStation {
     private int numberOfArrivedCars;
     private double time;
     private double previousTime;
-//    private double[] systemTimeConfidence;
 
-//    private double[] queueTimeConfidence;
-//    private double[] serviceTimeConfidence;
     private List<Double> queueStartTimes;
 
     private List<Double> arrivalRateList;

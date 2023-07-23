@@ -3,8 +3,13 @@ import java.util.Random;
 import static java.lang.Math.log;
 
 public class ExponentialDistribution extends Distribution {
+
     @Override
     public double getSample(double mean) {
+        Random random = new Random();
+        return mean * (-Math.log(1 - random.nextDouble()));
+    }
+    public static double createSample(double mean) {
         Random random = new Random();
         return mean * (-Math.log(1 - random.nextDouble()));
     }

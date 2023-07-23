@@ -12,15 +12,15 @@ public class GasStationSimulationApp {
         int maxCars = 50000;
         double meanServiceTime = 0.5;
 
-        int count = 100000;
-        double samples[] = new double[count];
-        double pdf[] = new double[count];
-        Distribution distribution = new ErlangDistribution(); // Choose the desired distribution type here
-        double mean = 1.0;
-        double xMax = 10.0; // Set the maximum x value for the PDF here
-        samples = distribution.getSamples(mean, count);
-        pdf = distribution.getPDF(mean, xMax);
-        GasStationSimulation.generateServiceTimeHistogram(samples, pdf);
+       // int count = 100000;
+       // double samples[] = new double[count];
+       // double pdf[] = new double[count];
+        //Distribution distribution = new ErlangDistribution(); // Choose the desired distribution type here
+       // double mean = 1.0;
+       // double xMax = 10.0; // Set the maximum x value for the PDF here
+       // samples = distribution.getSamples(mean, count);
+        //pdf = distribution.getPDF(mean, xMax);
+       // GasStationSimulation.generateServiceTimeHistogram(samples, pdf);
 
 
         List<Double> arrivalRates = new ArrayList<>();

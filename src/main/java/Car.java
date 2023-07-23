@@ -20,4 +20,5 @@ public class Car {
     public double getServiceTime() {
         return serviceTime;
     }
+
 }

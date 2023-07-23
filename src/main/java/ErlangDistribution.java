@@ -1,13 +1,18 @@
 import java.util.Random;
 
 class ErlangDistribution extends Distribution {
-    @Override
+
     public double getSample(double mean) {
         Random random = new Random();
         double sample = exponentialDistribution(mean);
         return sample;
     }
 
+    public static double createSample(double mean) {
+        Random random = new Random();
+        double sample = exponentialDistribution(mean);
+        return sample;
+    }
     @Override
     public double[] getSamples(double mean, int count) {
         double[] samples = new double[count];
@@ -41,7 +46,7 @@ class ErlangDistribution extends Distribution {
         }
         return result;
     }
-    private double exponentialDistribution(double mean) {
+    private static double exponentialDistribution(double mean) {
         Random random = new Random();
         return mean * (-Math.log(1 - random.nextDouble()));
     }

@@ -1,16 +1,20 @@
 import java.util.Random;
 
 class UniformDistribution extends Distribution {
-    @Override
+
     public double getSample(double mean) {
         Random random = new Random();
-        return mean * (random.nextDouble());
+        return 2 * mean * (random.nextDouble());
+    }
+    public static double createSample(double mean) {
+        Random random = new Random();
+        return 2 * mean * (random.nextDouble());
     }
     @Override
     public double[] getSamples(double mean, int count) {
         double[] samples = new double[count];
         for (int i = 0; i < count; i++) {
-            samples[i] = getSample(mean);
+            samples[i] = createSample(mean);
         }
         return samples;
     }
